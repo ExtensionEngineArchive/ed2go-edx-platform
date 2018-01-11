@@ -418,21 +418,25 @@ urlpatterns += (
         name='courseware_position',
     ),
 
-    # progress page
+    # The url of the progress tab has stayed the same because of the url reversing in other
+    # (views/templates), now if the student tries to access the progress tab by url, it will be
+    # redirected to the home page
     url(
         r'^courses/{}/progress$'.format(
             settings.COURSE_ID_PATTERN,
         ),
-        'courseware.views.views.progress',
+        RedirectView.as_view(url='/'),
         name='progress',
     ),
 
-    # Takes optional student_id for instructor use--shows profile as that student sees it.
+    # The url of the progress tab has stayed the same because of the url reversing in other
+    # (views/templates), now if the instructor tries to access the progress tab by url, it will be
+    # redirected to the home page
     url(
         r'^courses/{}/progress/(?P<student_id>[^/]*)/$'.format(
             settings.COURSE_ID_PATTERN,
         ),
-        'courseware.views.views.progress',
+        RedirectView.as_view(url='/'),
         name='student_progress',
     ),
 
