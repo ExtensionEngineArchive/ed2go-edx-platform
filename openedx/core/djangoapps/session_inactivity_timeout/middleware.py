@@ -16,7 +16,6 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 
 
-
 LAST_TOUCH_KEYNAME = 'SessionInactivityTimeout:last_touch'
 
 
