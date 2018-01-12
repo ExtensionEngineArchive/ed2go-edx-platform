@@ -601,6 +601,17 @@ EDX_ROOT_URL = ''
 LOGIN_REDIRECT_URL = EDX_ROOT_URL + '/login'
 LOGIN_URL = EDX_ROOT_URL + '/login'
 
+# If True every HTTP request to LMS is redirected to ED2GO_LOGIN_URL
+ED2GO = False
+
+# ED2GO LOGIN URL FOR REDIRECTION
+ED2GO_LOGIN_URL = 'https://www.ed2go.com/student-login/'
+
+LOGIN_EXEMPT_URLS = (
+ r'^about\.html$',
+ r'^legal/', # allow any URL under /legal/*
+)
+
 COURSE_NAME = "6.002_Spring_2012"
 COURSE_NUMBER = "6.002x"
 COURSE_TITLE = "Circuits and Electronics"
@@ -1228,6 +1239,9 @@ MIDDLEWARE_CLASSES = (
 
     # to redirected unenrolled students to the course info page
     'courseware.middleware.RedirectMiddleware',
+
+    ###############################
+    'lms.login_required_middleware.LoginRequiredMiddleware',
 
     'course_wiki.middleware.WikiAccessMiddleware',
 
