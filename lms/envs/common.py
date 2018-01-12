@@ -602,7 +602,7 @@ LOGIN_REDIRECT_URL = EDX_ROOT_URL + '/login'
 LOGIN_URL = EDX_ROOT_URL + '/login'
 
 # If True every HTTP request to LMS is redirected to ED2GO login page
-REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = True
+REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = False
 
 COURSE_NAME = "6.002_Spring_2012"
 COURSE_NUMBER = "6.002x"
