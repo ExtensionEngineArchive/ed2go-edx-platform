@@ -601,16 +601,8 @@ EDX_ROOT_URL = ''
 LOGIN_REDIRECT_URL = EDX_ROOT_URL + '/login'
 LOGIN_URL = EDX_ROOT_URL + '/login'
 
-# If True every HTTP request to LMS is redirected to ED2GO_LOGIN_URL
-ED2GO = False
-
-# ED2GO LOGIN URL FOR REDIRECTION
-ED2GO_LOGIN_URL = 'https://www.ed2go.com/student-login/'
-
-LOGIN_EXEMPT_URLS = (
- r'^about\.html$',
- r'^legal/', # allow any URL under /legal/*
-)
+# If True every HTTP request to LMS is redirected to ED2GO login page
+REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = True
 
 COURSE_NAME = "6.002_Spring_2012"
 COURSE_NUMBER = "6.002x"
@@ -1240,7 +1232,6 @@ MIDDLEWARE_CLASSES = (
     # to redirected unenrolled students to the course info page
     'courseware.middleware.RedirectMiddleware',
 
-    ###############################
     'lms.login_required_middleware.LoginRequiredMiddleware',
 
     'course_wiki.middleware.WikiAccessMiddleware',
@@ -1880,7 +1871,7 @@ BLOCK_STRUCTURES_SETTINGS = dict(
     # for more info.
     COURSE_PUBLISH_TASK_DELAY=30,
 
-    # Delay, in seconds, between retry attempts if a task fails.
+    # Delay, in seconds, between retry attempts if a task fails
     TASK_DEFAULT_RETRY_DELAY=30,
 
     # Maximum number of retries per task.
