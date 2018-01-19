@@ -12,6 +12,10 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib import auth
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+
+
 
 LAST_TOUCH_KEYNAME = 'SessionInactivityTimeout:last_touch'
 
@@ -46,9 +50,7 @@ class SessionInactivityTimeout(object):
 
                 # did we exceed the timeout limit?
                 if time_since_last_activity > timedelta(seconds=timeout_in_seconds):
-                    # yes? Then log the user out
                     del request.session[LAST_TOUCH_KEYNAME]
-                    auth.logout(request)
-                    return
+                    return HttpResponseRedirect(reverse('logout'))
 
             request.session[LAST_TOUCH_KEYNAME] = utc_now
