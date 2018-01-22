@@ -601,6 +601,10 @@ EDX_ROOT_URL = ''
 LOGIN_REDIRECT_URL = EDX_ROOT_URL + '/login'
 LOGIN_URL = EDX_ROOT_URL + '/login'
 
+
+LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
+
+
 # If True every HTTP request to LMS is redirected to ED2GO login page
 REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = False
 
