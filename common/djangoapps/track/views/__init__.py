@@ -18,6 +18,8 @@ from track import shim
 from track.models import TrackingLog
 from eventtracking import tracker as eventtracker
 
+from ed2go.track import track_user_event as ed2go_track
+
 
 def log_event(event):
     """Capture a event by sending it to the register trackers"""
@@ -75,6 +77,8 @@ def user_track(request):
     context_override['username'] = username
     context_override['event_source'] = 'browser'
     context_override['page'] = page
+
+    ed2go_track(request.user, name, data, page)
 
     with eventtracker.get_tracker().context('edx.course.browser', context_override):
         eventtracker.emit(name=name, data=data)

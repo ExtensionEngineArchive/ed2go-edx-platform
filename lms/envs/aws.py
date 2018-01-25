@@ -1005,3 +1005,6 @@ ICP_LICENSE = ENV_TOKENS.get('ICP_LICENSE', None)
 
 ############## Settings for CourseGraph ############################
 COURSEGRAPH_JOB_QUEUE = ENV_TOKENS.get('COURSEGRAPH_JOB_QUEUE', LOW_PRIORITY_QUEUE)
+
+########################## Ed2go overrides ##########################
+ED2GO_API_KEY = AUTH_TOKENS.get('ED2GO_API_KEY')

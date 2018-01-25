@@ -601,13 +601,6 @@ EDX_ROOT_URL = ''
 LOGIN_REDIRECT_URL = EDX_ROOT_URL + '/login'
 LOGIN_URL = EDX_ROOT_URL + '/login'
 
-
-LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
-
-
-# If True every HTTP request to LMS is redirected to ED2GO login page
-REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = False
-
 COURSE_NAME = "6.002_Spring_2012"
 COURSE_NUMBER = "6.002x"
 COURSE_TITLE = "Circuits and Electronics"
@@ -2247,6 +2240,8 @@ INSTALLED_APPS = (
     'openedx.features.enterprise_support',
 
     'experiments',
+
+    'ed2go',
 )
 
 ######################### CSRF #########################################
@@ -3222,3 +3217,12 @@ COURSES_API_CACHE_TIMEOUT = 3600  # Value is in seconds
 
 ############## Settings for CourseGraph ############################
 COURSEGRAPH_JOB_QUEUE = LOW_PRIORITY_QUEUE
+
+
+########################## Ed2go overrides ##########################
+LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
+
+# If True every HTTP request to LMS is redirected to ED2GO login page
+REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = False
+
+ED2GO_SESSION_INACTIVITY_THRESHOLD = 15 * 60  # in seconds

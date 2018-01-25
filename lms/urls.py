@@ -1013,6 +1013,10 @@ urlpatterns += (
     url(r'^api/', include('edx_proctoring.urls')),
 )
 
+urlpatterns += (
+    url(r'^ed2go/', include('ed2go.urls')),
+)
+
 if settings.FEATURES.get('ENABLE_FINANCIAL_ASSISTANCE_FORM'):
     urlpatterns += (
         url(
