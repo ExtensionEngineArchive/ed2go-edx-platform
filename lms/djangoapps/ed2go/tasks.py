@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils.timezone import now
 from celery import task
+from lms import CELERY_APP
 
 from .models import CourseSession
 
@@ -19,5 +20,5 @@ def check_course_sessions():
     """
     qs = CourseSession.objects.filter(active=True)
     for obj in qs:
-        if obj.last_activity_at < (now() - TRESHOLD):
+        if obj.last_activity_at < (now() - THRESHOLD):
             obj.close()

@@ -34,7 +34,6 @@ class CompletionProfile(models.Model):
 
     user = models.ForeignKey(User)
     course_key = CourseKeyField(max_length=255)
-    registration_key = models.CharField(max_length=255, unique=True)
     problems = JSONField()
     videos = JSONField()
 
@@ -101,10 +100,11 @@ class CompletionProfile(models.Model):
             user_id=self.user.id,
             course_id=self.course_key
         ).first()
+        course_registration = CourseRegistration.objects.get(user=self.user, course_key=self.course_key)
 
         return {
             'APIKey': settings.ED2GO_API_KEY,
-            'RegistrationKey': self.registration_key,
+            'RegistrationKey': course_registration.registration_key,
             'PercentProgress': self.progress * 100,
             'LastAccessDatetimeGMT': self.user.last_login,
             'CoursePassed': course_grade.passed,
