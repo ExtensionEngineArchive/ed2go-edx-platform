@@ -12,6 +12,7 @@ from lms.djangoapps.grades.models import PersistentCourseGrade
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 from openedx.core.djangoapps.content.course_structures.models import CourseStructure
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
+from student.models import CourseEnrollment
 
 LOG = logging.getLogger(__name__)
 
@@ -200,3 +201,20 @@ class CourseSession(models.Model):
         latest_time = last.last_activity_at if last.active else last.closed_at
 
         return latest_time - first.created_at
+
+
+class CourseRegistration(models.Model):
+    """
+    User-course pairing to avoid making another request to Ed2go GetRegistration
+    API endpoint in order to get the information about the course from the registration
+    key.
+    """
+    user = models.ForeignKey(User)
+    registration_key = models.CharField(max_length=255, db_index=True)
+    course_key = CourseKeyField(max_length=255)
+
+    def delete(self, *args, **kwargs):
+        """Unenroll the user prior to deleting the CourseRegistration."""
+        CourseEnrollment.unenroll(self.user, self.course_key)
+        LOG.info('Deleted course registration for user %s in course %s.', self.user, self.course_key)
+        super(CourseRegistration, self).delete(*args, **kwargs)
