@@ -38,7 +38,7 @@ def get_or_create_user_registration(registration_key):
             )
         except User.DoesNotExist:
             user = User.objects.create(
-                username=generate_username(student_data['FirstName'], student_data['LastName']),
+                username=generate_username(student_data['FirstName']),
                 email=student_data['Email'],
                 is_active=True
             )
