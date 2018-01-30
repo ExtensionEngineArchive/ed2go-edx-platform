@@ -174,10 +174,15 @@ class CourseSession(models.Model):
             self.last_activity_at = now()
             self.save()
 
-    def close(self):
-        """Closes the current session and sets the closed_at time to now. Ignores if the session is not active."""
+    def close(self, offset_delta=None):
+        """
+        Closes the current session and sets the closed_at time to now. Ignores if the session is not active.
+
+        Args:
+            offset_delta (datetime.timedelta): Time value which is subtracted from closed_at time.
+        """
         if self.active:
-            self.closed_at = now()
+            self.closed_at = (now() - offset_delta) if offset_delta else now()
             self.active = False
             self.save()
             LOG.info('Session closed for user %s in course %s', self.user, self.course_key)

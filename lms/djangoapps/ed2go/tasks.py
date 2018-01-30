@@ -19,4 +19,4 @@ def check_course_sessions():
     qs = CourseSession.objects.filter(active=True)
     for obj in qs:
         if obj.last_activity_at < (now() - THRESHOLD):
-            obj.close()
+            obj.close(offset_delta=THRESHOLD)
