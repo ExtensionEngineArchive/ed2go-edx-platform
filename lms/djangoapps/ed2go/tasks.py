@@ -7,7 +7,6 @@ from celery import task
 
 from .models import CourseSession
 
-LOG = logging.getLogger(__name__)
 THRESHOLD = timedelta(seconds=settings.ED2GO_SESSION_INACTIVITY_THRESHOLD)
 
 
@@ -19,5 +18,5 @@ def check_course_sessions():
     """
     qs = CourseSession.objects.filter(active=True)
     for obj in qs:
-        if obj.last_activity_at < (now() - TRESHOLD):
-            obj.close()
+        if obj.last_activity_at < (now() - THRESHOLD):
+            obj.close(offset_delta=THRESHOLD)
