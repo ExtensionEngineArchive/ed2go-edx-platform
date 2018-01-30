@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -13,6 +14,8 @@ from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 from openedx.core.djangoapps.content.course_structures.models import CourseStructure
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
+
+from ed2go.utils import XMLHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -33,7 +36,7 @@ class CompletionProfile(models.Model):
     PROBLEM_TYPES = ['problem']  # If there is a custom type that is observed include it here.
 
     user = models.ForeignKey(User)
-    course_key = CourseKeyField(max_length=255)
+    course_key = CourseKeyField(max_length=255, db_index=True)
     problems = JSONField()
     videos = JSONField()
 
@@ -82,7 +85,20 @@ class CompletionProfile(models.Model):
 
     def send_report(self):
         """Sends the generated report to the Ed2go completion report endpoint."""
-        pass  # @TODO: implement when possible
+        report = self.report
+        report['APIKey'] = settings.ED2GO_API_KEY
+        url = settings.ED2GO_REGISTRATION_SERVICE_URL
+        xmlh = XMLHandler()
+
+        data = xmlh.construct_request_data({'UpdateCompletionReport': report})
+        response = requests.post(url, data=data, headers=xmlh.headers)
+        error_msg = 'Error sending completion update report: {error}'
+        if response.status_code != 200:
+            LOG.error(error_msg.format(error=response.reason))
+        response_data = xmlh.completion_update_response_data_from_xml(response.content)
+        if response_data['Success'] == 'false':
+            LOG.error(error_msg.format(error=response_data['Code']))
+        LOG.info('Sent report for completion profile ID %d', self.id)
 
     @property
     def report(self):
@@ -103,15 +119,13 @@ class CompletionProfile(models.Model):
         course_registration = CourseRegistration.objects.get(user=self.user, course_key=self.course_key)
 
         return {
-            'APIKey': settings.ED2GO_API_KEY,
             'RegistrationKey': course_registration.registration_key,
             'PercentProgress': self.progress * 100,
-            'LastAccessDatetimeGMT': self.user.last_login,
-            'CoursePassed': course_grade.passed,
+            'LastAccessDatetimeGMT': self.user.last_login.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'CoursePassed': str(course_grade.passed).lower(),
             'PercentOverallScore': course_grade.percent,
-            'CompletionDatetimeGMT': persistent_grade.passed_timestamp if persistent_grade else None,
-            'TimeSpent': CourseSession.total_time(user=self.user, course_key=self.course_key),
-            'Custom': None,
+            'CompletionDatetimeGMT': persistent_grade.passed_timestamp if persistent_grade else '',
+            'TimeSpent': str(CourseSession.total_time(user=self.user, course_key=self.course_key)),
         }
 
     @property
@@ -186,6 +200,9 @@ class CourseSession(models.Model):
             self.active = False
             self.save()
             LOG.info('Session closed for user %s in course %s', self.user, self.course_key)
+
+            completion_profile = CompletionProfile.objects.get(user=self.user, course_key=self.course_key)
+            completion_profile.send_report()
 
     @classmethod
     def total_time(cls, user, course_key):
