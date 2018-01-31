@@ -189,6 +189,30 @@ class XMLHandler(object):
                 data[self.clean_tag(el.tag)] = el.text
         return data
 
+    def _extract_elements_from_xml(self, xml, path):
+        """
+        Extract XML elements based on the given path.
+
+        Args:
+            xml (str): The whole SOAP XML envelope in string format.
+            path (str): The XML path to the sequence with the requested elements.
+                Example:
+                    './soap:Body' \
+                    '/a:GetRegistrationResponse' \
+                    '/a:RegistrationsResponse' \
+                    '/a:Registrations' \
+                    '/a:Registration'
+
+        Returns:
+            List of sequences found in the passed in XML string.
+        """
+        tree = ElementTree.fromstring(xml)
+        namespace = {
+            'soap': 'http://www.w3.org/2003/05/soap-envelope',
+            'a': 'https://api.ed2go.com'
+        }
+        return tree.findall(path, namespace)
+
     def registration_data_from_xml(self, xml):
         """
         Extract the registration XML elements from the XML tree.
@@ -199,34 +223,33 @@ class XMLHandler(object):
         Returns:
             A dictionary with all the registration information extracted from dict.
         """
-        tree = ElementTree.fromstring(xml)
-        namespace = {
-            'soap': 'http://www.w3.org/2003/05/soap-envelope',
-            'a': 'https://api.ed2go.com'
-        }
-        elements = tree.findall(
-            './soap:Body'
-            '/a:GetRegistrationResponse'
-            '/a:RegistrationsResponse'
-            '/a:Registrations'
-            '/a:Registration',
-            namespace
-        )
+        path = './soap:Body' \
+               '/a:GetRegistrationResponse' \
+               '/a:RegistrationsResponse' \
+               '/a:Registrations' \
+               '/a:Registration'
+        elements = self._extract_elements_from_xml(xml, path)
         return self.dict_from_xml(elements[0])
 
     def completion_update_response_data_from_xml(self, xml):
-        tree = ElementTree.fromstring(xml)
-        namespace = {
-            'soap': 'http://www.w3.org/2003/05/soap-envelope',
-            'a': 'https://api.ed2go.com'
-        }
-        elements = tree.findall(
-            './soap:Body'
-            '/a:UpdateCompletionReportResponse'
-            '/a:Response'
-            '/a:Result',
-            namespace
-        )
+        """
+        Extract the completion update response XML elements from the XML tree.
+
+        Args:
+            xml (str): XML tree in string format (raw content from the GetRegistration endpoint.)
+
+        Returns:
+            A dictionary with all the response information extracted from dict:
+                * Result:
+                    - Success
+                    - Code
+                    - Message
+        """
+        path = './soap:Body' \
+            '/a:UpdateCompletionReportResponse' \
+            '/a:Response' \
+            '/a:Result'
+        elements = self._extract_elements_from_xml(xml, path)
         return self.dict_from_xml(elements[0])
 
 

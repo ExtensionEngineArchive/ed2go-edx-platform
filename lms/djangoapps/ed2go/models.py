@@ -84,21 +84,24 @@ class CompletionProfile(models.Model):
         self.save()
 
     def send_report(self):
-        """Sends the generated report to the Ed2go completion report endpoint."""
-        report = self.report
-        report['APIKey'] = settings.ED2GO_API_KEY
-        url = settings.ED2GO_REGISTRATION_SERVICE_URL
-        xmlh = XMLHandler()
+        """Sends the generated completion report to the Ed2go completion report endpoint."""
+        if settings.ENABLED_ED2GO_COMPLETION_REPORTING:
+            report = self.report
+            report['APIKey'] = settings.ED2GO_API_KEY
+            url = settings.ED2GO_REGISTRATION_SERVICE_URL
+            xmlh = XMLHandler()
 
-        data = xmlh.construct_request_data({'UpdateCompletionReport': report})
-        response = requests.post(url, data=data, headers=xmlh.headers)
-        error_msg = 'Error sending completion update report: {error}'
-        if response.status_code != 200:
-            LOG.error(error_msg.format(error=response.reason))
-        response_data = xmlh.completion_update_response_data_from_xml(response.content)
-        if response_data['Success'] == 'false':
-            LOG.error(error_msg.format(error=response_data['Code']))
-        LOG.info('Sent report for completion profile ID %d', self.id)
+            data = xmlh.construct_request_data({'UpdateCompletionReport': report})
+            response = requests.post(url, data=data, headers=xmlh.headers)
+
+            error_msg = 'Error sending completion update report: {error}'
+            if response.status_code != 200:
+                LOG.error(error_msg.format(error=response.reason))
+
+            response_data = xmlh.completion_update_response_data_from_xml(response.content)
+            if response_data['Success'] == 'false':
+                LOG.error(error_msg.format(error=response_data['Code']))
+            LOG.info('Sent report for completion profile ID %d', self.id)
 
     @property
     def report(self):
