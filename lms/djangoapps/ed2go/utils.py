@@ -56,7 +56,7 @@ def checksum_valid(request_data, request_type):
     elif request_type == constants.ACTION_REQUEST:
         checksum_params = constants.ACTION_CHECKSUM_PARAMS
     else:
-        raise Exception('Request type %s not supported.' % reqeust_type)
+        raise Exception('Request type %s not supported.' % request_type)
 
     value_list = [api_key]
     for param in checksum_params:
