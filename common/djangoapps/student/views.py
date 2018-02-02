@@ -2816,9 +2816,9 @@ def change_email_settings(request):
 
 
 class LogoutView(TemplateView):
-    """
-    Logs out user and redirects.
-    """
+    """Logs out user and redirects."""
     def dispatch(self, request, *args, **kwargs):  # pylint: disable=missing-docstring
+        user = request.user
+        meta = json.loads(user.profile.meta) if user.is_authenticated() and user.profile.meta else {}
         logout(request)
-        return redirect(settings.LOGOUT_REDIRECT_URL)
+        return redirect(meta.get('ReturnURL', settings.LOGOUT_REDIRECT_URL))
