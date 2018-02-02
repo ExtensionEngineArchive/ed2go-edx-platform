@@ -1,3 +1,4 @@
+import json
 from dateutil import parser
 
 from django.contrib.auth.models import User
@@ -47,9 +48,9 @@ def get_or_create_user_registration(registration_key):
                 name=student_data['FirstName'] + ' ' + student_data['LastName'],
                 country=student_data['Country'],
                 year_of_birth=parser.parse(student_data['Birthdate']).year,
-                meta={
+                meta=json.dumps({
                     'ReturnURL': registration_data['ReturnURL']
-                }
+                })
             )
             course_registration = CourseRegistration.objects.create(
                 user=user,

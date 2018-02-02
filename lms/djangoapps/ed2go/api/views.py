@@ -27,7 +27,7 @@ class ActionView(APIView):
             return Response(msg, status=400)
 
         action = request.data.get(constants.ACTION)
-        registration_key = reqeust.data.get(constants.REGISTRATION_KEY)
+        registration_key = request.data.get(constants.REGISTRATION_KEY)
 
         if action == 'NewRegistration':
             user, course_registration = get_or_create_user_registration(registration_key)
