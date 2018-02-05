@@ -40,6 +40,10 @@ class CompletionProfile(models.Model):
     problems = JSONField()
     videos = JSONField()
 
+    # Indicates whether we need to send a report update for this completion profile.
+    # Should be set to False whenever course progress or session is updated.
+    reported = models.BooleanField(default=False)
+
     def save(self, *args, **kwargs):
         """
         Override of the default save() method. Whenever a new object is instantiated
@@ -81,6 +85,7 @@ class CompletionProfile(models.Model):
             self.videos[usage_key] = True
         else:
             raise Exception('Type %s not supported.' % type)
+        self.reported = False
         self.save()
 
     def send_report(self):
@@ -91,17 +96,22 @@ class CompletionProfile(models.Model):
             url = settings.ED2GO_REGISTRATION_SERVICE_URL
             xmlh = XMLHandler()
 
-            data = xmlh.construct_request_data({'UpdateCompletionReport': report})
+            data = xmlh.request_data_from_dict({'UpdateCompletionReport': report})
             response = requests.post(url, data=data, headers=xmlh.headers)
 
             error_msg = 'Error sending completion update report: {error}'
             if response.status_code != 200:
                 LOG.error(error_msg.format(error=response.reason))
+                return False
 
             response_data = xmlh.completion_update_response_data_from_xml(response.content)
             if response_data['Success'] == 'false':
                 LOG.error(error_msg.format(error=response_data['Code']))
-            LOG.info('Sent report for completion profile ID %d', self.id)
+            else:
+                self.reported = True
+                self.save()
+                LOG.info('Sent report for completion profile ID %d', self.id)
+            return True
 
     @property
     def report(self):
@@ -173,6 +183,12 @@ class CourseSession(models.Model):
     class Meta:
         get_latest_by = 'created_at'
 
+    def _update_completion_profile(self):
+        """Update the corresponding CompletionProfile to indicate that the session was updated."""
+        profile = CompletionProfile.objects.get(user=self.user, course_key=self.course_key)
+        profile.reported = False
+        profile.save()
+
     def save(self, *args, **kwargs):
         if self.pk is None:
             # Only one session per user per course should be active at the same time.
@@ -183,6 +199,8 @@ class CourseSession(models.Model):
 
             self.created_at = now()
             self.last_activity_at = now()
+            self._update_completion_profile()
+
         return super(CourseSession, self).save(*args, **kwargs)
 
     def update(self):
@@ -190,6 +208,7 @@ class CourseSession(models.Model):
         if self.active:
             self.last_activity_at = now()
             self.save()
+            self._update_completion_profile()
 
     def close(self, offset_delta=None):
         """
@@ -204,8 +223,7 @@ class CourseSession(models.Model):
             self.save()
             LOG.info('Session closed for user %s in course %s', self.user, self.course_key)
 
-            completion_profile = CompletionProfile.objects.get(user=self.user, course_key=self.course_key)
-            completion_profile.send_report()
+            self._update_completion_profile()
 
     @classmethod
     def total_time(cls, user, course_key):
