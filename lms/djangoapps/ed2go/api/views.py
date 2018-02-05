@@ -16,7 +16,7 @@ class ActionView(APIView):
         POST request handler. Handles the action requests from Ed2go. Actions supported:
             * NewRegistration - creates a new user and/or a new course registration
             * UpdateRegistration - updates a user's information
-            * DeleteRegistration - deletes the corresponding CourseRegistration object
+            * CancelRegistration - deletes the corresponding CourseRegistration object
 
         Returns:
             Response with code 200 if the request was completed.
@@ -38,7 +38,7 @@ class ActionView(APIView):
         elif action == 'UpdateRegistration':
             update_registration(registration_key)
             msg = 'User {user} information updated.'.format(user=user.username)
-        elif action == 'DeleteRegistration':
+        elif action == 'CancelRegistration':
             CourseRegistration.objects.get(registration_key=registration_key).delete()
             msg = 'Course registration deleted.'
         else:
