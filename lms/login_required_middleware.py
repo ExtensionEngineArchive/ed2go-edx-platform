@@ -17,4 +17,4 @@ class LoginRequiredMiddleware:
         # redirected to ED2GO LOGIN URL
         if settings.REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN:
             if not request.user.is_authenticated():
-                return HttpResponseRedirect('https://www.ed2go.com/student-login/')
+                return HttpResponseRedirect(settings.STUDENT_LOGIN_URL)

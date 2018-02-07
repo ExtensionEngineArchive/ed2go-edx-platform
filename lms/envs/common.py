@@ -3220,6 +3220,8 @@ COURSEGRAPH_JOB_QUEUE = LOW_PRIORITY_QUEUE
 
 
 ########################## Ed2go overrides ##########################
+STUDENT_LOGIN_URL = 'https://www.ed2go.com/student-login/'
+
 LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
 
 # If True every HTTP request to LMS is redirected to ED2GO login page
