@@ -4,8 +4,8 @@ from django.dispatch import receiver
 from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locator import BlockUsageLocator
 
-from .models import CompletionProfile, CourseSession
-from .utils import extract_course_id_from_url, extract_problem_id
+from ed2go.models import CompletionProfile, CourseSession
+from ed2go.utils import extract_course_id_from_url, extract_problem_id
 
 EVENT_BLOCK_MAP = {
     'stop_video': 'video',

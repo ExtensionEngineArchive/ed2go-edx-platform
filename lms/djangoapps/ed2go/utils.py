@@ -160,8 +160,11 @@ class XMLHandler(object):
             )
         return xml
 
-    def construct_request_data(self, data):
+    def request_data_from_dict(self, data):
         return self.soap_wrapper.format(inner=self.xml_from_dict(data))
+
+    def request_data_from_xml(self, data):
+        return self.soap_wrapper.format(inner=data)
 
     def clean_tag(self, el):
         """
@@ -246,9 +249,9 @@ class XMLHandler(object):
                     - Message
         """
         path = './soap:Body' \
-            '/a:UpdateCompletionReportResponse' \
-            '/a:Response' \
-            '/a:Result'
+               '/a:UpdateCompletionReportResponse' \
+               '/a:Response' \
+               '/a:Result'
         elements = self._extract_elements_from_xml(xml, path)
         return self.dict_from_xml(elements[0])
 
@@ -312,7 +315,7 @@ def get_registration_data(reg_key):
             'RegistrationKey': reg_key
         }
     }
-    request_data = xmlh.construct_request_data(data)
+    request_data = xmlh.request_data_from_dict(data)
 
     response = requests.post(url, data=request_data, headers=xmlh.headers)
     if response.status_code != 200:
