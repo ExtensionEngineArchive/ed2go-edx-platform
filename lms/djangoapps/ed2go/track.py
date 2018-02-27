@@ -39,7 +39,6 @@ def track_user_event(user, event_name, data, page):
         usage_key = BlockUsageLocator(course_key, block_type, data_id)
         completion_info, _ = CompletionProfile.objects.get_or_create(user=user, course_key=course_key)
         completion_info.mark_progress(block_type, str(usage_key))
-        completion_info.send_report()
 
 
 @receiver(user_logged_out)
