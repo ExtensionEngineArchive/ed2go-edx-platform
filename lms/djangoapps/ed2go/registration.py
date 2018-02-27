@@ -28,7 +28,10 @@ def get_or_create_user_registration(registration_key):
     except CourseRegistration.DoesNotExist:
         registration_data = get_registration_data(registration_key)
         student_data = registration_data['Student']
-        course_key = CourseKey.from_string(registration_data['Course']['Code'])
+
+        # The reponse from ed2go contains only the course code
+        course_code = 'course-v1:Microsoft+' + registration_data['Course']['Code'] + '+2018_T1'
+        course_key = CourseKey.from_string(course_code)
 
         try:
             user = User.objects.get(email=student_data['Email'])
