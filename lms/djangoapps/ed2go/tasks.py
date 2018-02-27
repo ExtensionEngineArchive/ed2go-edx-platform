@@ -29,26 +29,28 @@ def send_completion_report():
     """
     Periodic task to send completion reports to ed2go.
     """
-    qs = CompletionProfile.objects.filter(reported=False)
-    xmlh = XMLHandler()
-    xml_data = []
+    if settings.ENABLED_ED2GO_COMPLETION_REPORTING:
+        qs = CompletionProfile.objects.filter(reported=False)
+        xmlh = XMLHandler()
+        xml_data = []
 
-    for obj in qs:
-        report = obj.report
-        report['APIKey'] = settings.ED2GO_API_KEY
-        xml_data.append(
-            xmlh.xml_from_dict({'UpdateCompletionReport': report})
+        for obj in qs:
+            report = obj.report
+            report['APIKey'] = settings.ED2GO_API_KEY
+            xml_data.append(
+                xmlh.xml_from_dict({'UpdateCompletionReport': report})
+            )
+
+        request_data = xmlh.request_data_from_xml(''.join(xml_data))
+        response = requests.post(
+            url=settings.ED2GO_REGISTRATION_SERVICE_URL,
+            data=data,
+            headers=xmlh.headers
         )
-
-    request_data = xmlh.request_data_from_xml(''.join(xml_data))
-    response = requests.post(
-        url=settings.ED2GO_REGISTRATION_SERVICE_URL,
-        data=data,
-        headers=xmlh.headers
-    )
-    if response.status_code == 200:
-        response_data = xmlh.completion_update_response_data_from_xml(response.content)
-        if response_data['Success'] == 'true':
-            LOG.info('Sent batch completion report update.')
-            return True
-    LOG.error('Failed to send batch completion report update.')
+        if response.status_code == 200:
+            response_data = xmlh.completion_update_response_data_from_xml(response.content)
+            if response_data['Success'] == 'true':
+                LOG.info('Sent batch completion report update.')
+                return True
+        LOG.error('Failed to send batch completion report update.')
+        return False
