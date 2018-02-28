@@ -1,3 +1,4 @@
+import logging
 from dateutil import parser
 
 import requests
@@ -14,6 +15,8 @@ from ed2go.models import CourseRegistration
 from ed2go.registration import get_or_create_user_registration
 from ed2go.utils import XMLHandler, generate_username, get_registration_data, request_valid
 from student.models import CourseEnrollment, UserProfile
+
+LOG = logging.getLogger(__name__)
 
 
 class SSOView(View):
@@ -37,9 +40,16 @@ class SSOView(View):
             * the user needs to be logged in
             * the user needs to be redirected to the course in corresponding
               CourseRegistration object.
+
+        Invalid requests will be redirect to the passed in ReturnURL parameter, if
+        there is one, else a 400 error will be returned.
         """
         valid, msg = request_valid(request.POST, constants.SSO_REQUEST)
         if not valid:
+            return_url = request.POST.get(constants.RETURN_URL)
+            if return_url:
+                LOG.info('Invalid SSO request. Redirecting to %s', return_url)
+                return HttpResponseRedirect(return_url)
             return HttpResponse(msg, status=400)
 
         registration_key = request.POST[constants.REGISTRATION_KEY]
