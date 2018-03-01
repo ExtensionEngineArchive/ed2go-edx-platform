@@ -44,12 +44,17 @@ class CompletionProfile(models.Model):
     # Should be set to False whenever course progress or session is updated.
     reported = models.BooleanField(default=False)
 
+    registration_key = models.CharField(max_length=255, db_index=True, blank=True)
+    active = models.BooleanField(default=True)
+
     def save(self, *args, **kwargs):
         """
         Override of the default save() method. Whenever a new object is instantiated
         we collect all the video block and problem block IDs that are in the course
         in dictionaries where the item values represent if the user attempted/watched
         a problem/video (defaults to False).
+
+        Creating an instance of this model enrolls the user into the course.
         """
         if self.pk is None:
             course_structure = CourseStructure.objects.get(course_id=self.course_key).structure
@@ -64,7 +69,23 @@ class CompletionProfile(models.Model):
 
             self.problems = problems
             self.videos = videos
+
+            CourseEnrollment.enroll(self.user, self.course_key)
         super(CompletionProfile, self).save(*args, **kwargs)
+
+    def deactivate(self):
+        """Unenroll the user prior to deactivating this instance."""
+        CourseEnrollment.unenroll(self.user, self.course_key)
+        self.active = False
+        self.save()
+        LOG.info('Deactivated course registration for user %s in course %s.', self.user, self.course_key)
+
+    def activate(self):
+        """Enroll the user and activate this instance."""
+        CourseEnrollment.enroll(self.user, self.course_key)
+        self.active = True
+        self.save()
+        LOG.into('Activated course registration for user %s in course %s.', self.user, self.course_key)
 
     def mark_progress(self, type, usage_key):
         """
@@ -129,10 +150,9 @@ class CompletionProfile(models.Model):
             user_id=self.user.id,
             course_id=self.course_key
         ).first()
-        course_registration = CourseRegistration.objects.get(user=self.user, course_key=self.course_key)
 
         return {
-            'RegistrationKey': course_registration.registration_key,
+            'RegistrationKey': self.registration_key,
             'PercentProgress': self.progress * 100,
             'LastAccessDatetimeGMT': self.user.last_login.strftime('%Y-%m-%dT%H:%M:%SZ'),
             'CoursePassed': str(course_grade.passed).lower(),
@@ -244,20 +264,3 @@ class CourseSession(models.Model):
         latest_time = last.last_activity_at if last.active else last.closed_at
 
         return latest_time - first.created_at
-
-
-class CourseRegistration(models.Model):
-    """
-    User-course pairing to avoid making another request to Ed2go GetRegistration
-    API endpoint in order to get the information about the course from the registration
-    key.
-    """
-    user = models.ForeignKey(User)
-    registration_key = models.CharField(max_length=255, db_index=True)
-    course_key = CourseKeyField(max_length=255)
-
-    def delete(self, *args, **kwargs):
-        """Unenroll the user prior to deleting the CourseRegistration."""
-        CourseEnrollment.unenroll(self.user, self.course_key)
-        LOG.info('Deleted course registration for user %s in course %s.', self.user, self.course_key)
-        super(CourseRegistration, self).delete(*args, **kwargs)
