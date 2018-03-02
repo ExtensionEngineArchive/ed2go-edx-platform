@@ -6,26 +6,26 @@ from opaque_keys.edx.keys import CourseKey
 from student.models import CourseEnrollment, UserProfile
 
 from ed2go.utils import generate_username, get_registration_data
-from ed2go.models import CourseRegistration
+from ed2go.models import CompletionProfile
 
 
-def get_or_create_user_registration(registration_key):
+def get_or_create_user_completion_profile(registration_key):
     """
-    Get or create a user and course registration.
+    Get or create a user and completion profile.
     Makes a request to the Ed2go GetRegistration endpoint using the provided
-    registration key and fetches or creates a new user and course registration
+    registration key and fetches or creates a new user and completion profile
     based on the information received in the response.
 
     Args:
         registration_key (str): The registration key
 
     Returns:
-        User and CourseRegistration
+        User and CompletionProfile instance
     """
     try:
-        course_registration = CourseRegistration.objects.get(registration_key=registration_key)
-        user = course_registration.user
-    except CourseRegistration.DoesNotExist:
+        completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
+        user = completion_profile.user
+    except CompletionProfile.DoesNotExist:
         registration_data = get_registration_data(registration_key)
         student_data = registration_data['Student']
 
@@ -35,7 +35,7 @@ def get_or_create_user_registration(registration_key):
 
         try:
             user = User.objects.get(email=student_data['Email'])
-            course_registration, _ = CourseRegistration.objects.get_or_create(
+            completion_profile, _ = CompletionProfile.objects.get_or_create(
                 user=user,
                 registration_key=registration_key,
                 course_key=course_key
@@ -55,13 +55,12 @@ def get_or_create_user_registration(registration_key):
                     'ReturnURL': registration_data['ReturnURL']
                 })
             )
-            course_registration = CourseRegistration.objects.create(
+            completion_profile = CompletionProfile.objects.create(
                 user=user,
                 registration_key=registration_key,
                 course_key=course_key
             )
-        CourseEnrollment.enroll(user, course_key=course_registration.course_key)
-    return user, course_registration
+    return user, completion_profile
 
 
 def update_registration(registration_key):

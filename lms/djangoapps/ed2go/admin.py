@@ -1,16 +1,11 @@
 from django.contrib import admin
 
-from ed2go.models import CompletionProfile, CourseRegistration, CourseSession
+from ed2go.models import CompletionProfile, CourseSession
 
 
 @admin.register(CompletionProfile)
 class CompletionProfileAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'course_key')
-
-
-@admin.register(CourseRegistration)
-class CourseRegistrationAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'course_key', 'registration_key')
+    list_display = ('pk', 'user', 'course_key', 'registration_key', 'active')
 
 
 @admin.register(CourseSession)
