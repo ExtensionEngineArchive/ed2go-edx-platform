@@ -15,7 +15,7 @@ from openedx.core.djangoapps.content.course_structures.models import CourseStruc
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
 
-from ed2go.utils import XMLHandler
+from ed2go.utils import XMLHandler, format_timedelta
 
 LOG = logging.getLogger(__name__)
 
@@ -158,7 +158,7 @@ class CompletionProfile(models.Model):
             'CoursePassed': str(course_grade.passed).lower(),
             'PercentOverallScore': course_grade.percent,
             'CompletionDatetimeGMT': persistent_grade.passed_timestamp if persistent_grade else '',
-            'TimeSpent': str(CourseSession.total_time(user=self.user, course_key=self.course_key)),
+            'TimeSpent': format_timedelta(CourseSession.total_time(user=self.user, course_key=self.course_key)),
         }
 
     @property

@@ -331,3 +331,16 @@ def generate_username(first_name):
         username = first_name + str(randint(1000, 9999))
         if not User.objects.filter(username=username).exists():
             return username
+
+
+def format_timedelta(tdelta):
+    """Format a timedelta object to format: day.HH:MM:SS"""
+    days = tdelta.days
+    hours, rem = divmod(tdelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    return '{days}.{hours}:{minutes}:{seconds}'.format(
+        days=days,
+        hours=hours,
+        minutes=minutes,
+        seconds=seconds
+    )
