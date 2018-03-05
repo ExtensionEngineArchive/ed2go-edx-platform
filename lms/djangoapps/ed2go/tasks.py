@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+import requests
 from celery import task
 from django.conf import settings
 from django.utils.timezone import now
@@ -46,7 +47,7 @@ def send_completion_report():
         request_data = xmlh.request_data_from_xml(''.join(xml_data))
         response = requests.post(
             url=settings.ED2GO_REGISTRATION_SERVICE_URL,
-            data=data,
+            data=request_data,
             headers=xmlh.headers
         )
         if response.status_code == 200:
