@@ -35,6 +35,7 @@ class ActionView(APIView):
                 user=user.username,
                 course=completion_profile.course_key
             )
+            return Response(msg, status=201)
         elif action == 'UpdateRegistration':
             update_registration(registration_key)
             msg = 'User {user} information updated.'.format(user=user.username)
