@@ -1,10 +1,12 @@
 import logging
 from datetime import timedelta
 
+from celery import task
 from django.conf import settings
 from django.utils.timezone import now
-from celery import task
+from waffle import switch_is_active
 
+from ed2go.constants import ENABLED_ED2GO_COMPLETION_REPORTING
 from ed2go.models import CompletionProfile, CourseSession
 from ed2go.utils import XMLHandler
 
@@ -29,7 +31,7 @@ def send_completion_report():
     """
     Periodic task to send completion reports to ed2go.
     """
-    if settings.ENABLED_ED2GO_COMPLETION_REPORTING:
+    if switch_is_active(ENABLED_ED2GO_COMPLETION_REPORTING):
         qs = CompletionProfile.objects.filter(reported=False)
         xmlh = XMLHandler()
         xml_data = []
