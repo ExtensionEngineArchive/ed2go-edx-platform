@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('ed2go', '0001_initial'),
-        ('ed2go', '0007_auto_20180302_0904')
+        ('ed2go', '0006_auto_20180302_0749')
     ]
     operations = [
         migrations.RunPython(create_switch, remove_switch)
