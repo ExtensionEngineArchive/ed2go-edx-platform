@@ -1,4 +1,3 @@
-import requests
 from django.contrib.auth.models import User
 from opaque_keys.edx.keys import CourseKey
 from rest_framework.response import Response
@@ -29,17 +28,17 @@ class ActionView(APIView):
         action = request.data.get(constants.ACTION)
         registration_key = request.data.get(constants.REGISTRATION_KEY)
 
-        if action == 'NewRegistration':
+        if action == constants.NEW_REGISTRATION_ACTION:
             user, completion_profile = get_or_create_user_completion_profile(registration_key)
             msg = 'User {user} created and enrolled into {course}.'.format(
                 user=user.username,
                 course=completion_profile.course_key
             )
             return Response(msg, status=201)
-        elif action == 'UpdateRegistration':
-            update_registration(registration_key)
+        elif action == constants.UPDATE_REGISTRATION_ACTION:
+            user = update_registration(registration_key)
             msg = 'User {user} information updated.'.format(user=user.username)
-        elif action == 'CancelRegistration':
+        elif action == constants.CANCEL_REGISTRATION_ACTION:
             CompletionProfile.objects.get(registration_key=registration_key).deactivate()
             msg = 'Completion profile deactivated.'
         else:

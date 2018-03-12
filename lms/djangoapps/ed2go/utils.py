@@ -2,10 +2,10 @@ import hashlib
 import re
 import urllib
 from xml.etree import ElementTree
-from dateutil.parser import parse
 from random import randint
 
 import requests
+from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.timezone import now
@@ -151,9 +151,9 @@ class XMLHandler(object):
             XML formatted string from the input data.
         """
         xml = ''
-        for k, v in data.items():
+        for k, v in data.items():  # pylint: disable=invalid-name
             elements = ''
-            for sk, sv in v.items():
+            for sk, sv in v.items():  # pylint: disable=invalid-name
                 elements += '<{key}>{value}</{key}>'.format(key=sk, value=sv)
             xml += '<{key} xmlns="https://api.ed2go.com">{elements}</{key}>'.format(
                 key=k, elements=elements
@@ -166,13 +166,13 @@ class XMLHandler(object):
     def request_data_from_xml(self, data):
         return self.soap_wrapper.format(inner=data)
 
-    def clean_tag(self, el):
+    def clean_tag(self, element):
         """
         Remove the schema prefix.
         Example:
           "{https://api.ed2go.com}NewRegistration" > "NewRegistration"
         """
-        return re.sub(r'{[\w\:\/\.]*}', '', el)
+        return re.sub(r'{[\w\:\/\.]*}', '', element)
 
     def dict_from_xml(self, elements):
         """
@@ -185,11 +185,11 @@ class XMLHandler(object):
             A dictionary with key being the elements tags.
         """
         data = {}
-        for el in elements:
-            if el.getchildren():
-                data[self.clean_tag(el.tag)] = self.dict_from_xml(el.getchildren())
+        for element in elements:
+            if element.getchildren():
+                data[self.clean_tag(element.tag)] = self.dict_from_xml(element.getchildren())
             else:
-                data[self.clean_tag(el.tag)] = el.text
+                data[self.clean_tag(element.tag)] = element.text
         return data
 
     def _extract_elements_from_xml(self, xml, path):

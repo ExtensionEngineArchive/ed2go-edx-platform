@@ -2,9 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth import login
-from django.contrib.auth.models import User
 from django.http.response import HttpResponse, HttpResponseRedirect
-from opaque_keys.edx.keys import CourseKey
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 

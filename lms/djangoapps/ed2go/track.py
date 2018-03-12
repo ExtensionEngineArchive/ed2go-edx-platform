@@ -42,7 +42,7 @@ def track_user_event(user, event_name, data, page):
 
 
 @receiver(user_logged_out)
-def logout_handler(sender, user, request, **kwargs):
+def logout_handler(sender, user, request, **kwargs):  # pylint: disable=unused-argument
     """Once the user logs out, all active sessions are closed."""
     sessions = CourseSession.objects.filter(user=user, active=True)
     for session in sessions:

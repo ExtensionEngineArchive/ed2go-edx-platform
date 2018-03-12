@@ -21,7 +21,7 @@ def check_course_sessions():
     Periodic task to close any active sessions whose last activity was longer
     than the THRESHOLD.
     """
-    qs = CourseSession.objects.filter(active=True)
+    qs = CourseSession.objects.filter(active=True)  # pylint: disable=invalid-name
     for obj in qs:
         if obj.last_activity_at < (now() - THRESHOLD):
             obj.close(offset_delta=THRESHOLD)
@@ -33,7 +33,7 @@ def send_completion_report():
     Periodic task to send completion reports to ed2go.
     """
     if switch_is_active(ENABLED_ED2GO_COMPLETION_REPORTING):
-        qs = CompletionProfile.objects.filter(reported=False)
+        qs = CompletionProfile.objects.filter(reported=False)  # pylint: disable=invalid-name
         xmlh = XMLHandler()
         xml_data = []
 
