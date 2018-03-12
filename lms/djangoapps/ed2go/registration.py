@@ -3,7 +3,7 @@ from dateutil import parser
 
 from django.contrib.auth.models import User
 from opaque_keys.edx.keys import CourseKey
-from student.models import CourseEnrollment, UserProfile
+from student.models import UserProfile
 
 from ed2go.utils import generate_username, get_registration_data
 from ed2go.models import CompletionProfile
@@ -74,6 +74,9 @@ def update_registration(registration_key):
     Args:
         registration_key (str): The registration key with which data is fetched
             from the Ed2go endpoint.
+
+    Returns:
+        The user who was updated.
     """
     registration_data = get_registration_data(registration_key)
     student_data = registration_data['Student']
@@ -85,3 +88,5 @@ def update_registration(registration_key):
     profile.year_of_birth = parser.parse(student_data['Birthdate']).year
     profile.meta['ReturnURL'] = registration_data['ReturnURL']
     profile.save()
+
+    return user

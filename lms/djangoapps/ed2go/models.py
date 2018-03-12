@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
 from jsonfield import JSONField
-from opaque_keys.edx.keys import CourseKey
 
 from lms.djangoapps.courseware.courses import get_course
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -47,6 +46,20 @@ class CompletionProfile(models.Model):
     registration_key = models.CharField(max_length=255, db_index=True, blank=True)
     active = models.BooleanField(default=True)
 
+    def _get_problems_videos(self):
+        """Retrieve all the problems and videos in the current course."""
+        course_structure = CourseStructure.objects.get(course_id=self.course_key).structure
+        problems = {}
+        videos = {}
+
+        for k, v in course_structure['blocks'].items():  # pylint: disable=invalid-name
+            if v['block_type'] == 'video':
+                videos[k] = False
+            if v['block_type'] in self.PROBLEM_TYPES:
+                problems[k] = False
+
+        return problems, videos
+
     def save(self, *args, **kwargs):
         """
         Override of the default save() method. Whenever a new object is instantiated
@@ -57,16 +70,7 @@ class CompletionProfile(models.Model):
         Creating an instance of this model enrolls the user into the course.
         """
         if self.pk is None:
-            course_structure = CourseStructure.objects.get(course_id=self.course_key).structure
-            problems = {}
-            videos = {}
-
-            for k, v in course_structure['blocks'].items():
-                if v['block_type'] == 'video':
-                    videos[k] = False
-                if v['block_type'] in self.PROBLEM_TYPES:
-                    problems[k] = False
-
+            problems, videos = self._get_problems_videos()
             self.problems = problems
             self.videos = videos
 
@@ -87,12 +91,12 @@ class CompletionProfile(models.Model):
         self.save()
         LOG.into('Activated course registration for user %s in course %s.', self.user, self.course_key)
 
-    def mark_progress(self, type, usage_key):
+    def mark_progress(self, block_type, usage_key):
         """
         Marks a block as completed/attempted.
 
         Args:
-            type (str): type of the block.
+            block_type (str): type of the block.
             usage_key (str): usage_key of the block.
         Raises:
             KeyError if the passed in usage_key does not exist in the saved problems or videos.
@@ -100,12 +104,12 @@ class CompletionProfile(models.Model):
               subsequently to a course.
             Exception if the passed in type is not supported.
         """
-        if type in self.PROBLEM_TYPES:
+        if block_type in self.PROBLEM_TYPES:
             self.problems[usage_key] = True
-        elif type == 'video':
+        elif block_type == 'video':
             self.videos[usage_key] = True
         else:
-            raise Exception('Type %s not supported.' % type)
+            raise Exception('Type %s not supported.' % block_type)
         self.reported = False
         self.save()
 
@@ -185,8 +189,7 @@ class CompletionProfile(models.Model):
             return videos_completed
         elif videos_completed is None:
             return problems_completed
-        else:
-            return 0.5 * problems_completed + 0.5 * videos_completed
+        return 0.5 * problems_completed + 0.5 * videos_completed
 
 
 class CourseSession(models.Model):
@@ -200,7 +203,7 @@ class CourseSession(models.Model):
     last_activity_at = models.DateTimeField()
     active = models.BooleanField(default=True, db_index=True)
 
-    class Meta:
+    class Meta:  # pylint: disable=old-style-class
         get_latest_by = 'created_at'
 
     def _update_completion_profile(self):
@@ -213,7 +216,7 @@ class CourseSession(models.Model):
         if self.pk is None:
             # Only one session per user per course should be active at the same time.
             cls = self.__class__
-            qs = cls.objects.filter(user=self.user, course_key=self.course_key, active=True)
+            qs = cls.objects.filter(user=self.user, course_key=self.course_key, active=True)  # pylint: disable=invalid-name
             for obj in qs:
                 obj.close()
 
@@ -258,7 +261,7 @@ class CourseSession(models.Model):
         Returns:
             A timedelta object which represents the total time a user spent in a course.
         """
-        qs = cls.objects.filter(user=user, course_key=course_key)
+        qs = cls.objects.filter(user=user, course_key=course_key)  # pylint: disable=invalid-name
         first = qs.earliest()
         last = qs.latest()
         latest_time = last.last_activity_at if last.active else last.closed_at

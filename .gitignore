@@ -133,3 +133,4 @@ autodeploy.properties
 dist
 
 .vscode
+.cache
