@@ -16,11 +16,13 @@ from ed2go.models import CompletionProfile, CourseSession
 class Ed2goTestMixin(ModuleStoreTestCase):
     username = 'tester'
     password = 'password'
+    email = 'tester@example.com'
 
-    def create_user(self, username=None, password=None):
+    def create_user(self, username=None, password=None, email=None):
         username = username if username else self.username
         password = password if password else self.password
-        return UserFactory.create(username=username, password=password)
+        email = email if email else self.email
+        return UserFactory.create(username=username, password=password, email=email)
 
     def create_course_key(self, org='test', course='test', run=None):
         """Creates a new instance of CourseKey."""
