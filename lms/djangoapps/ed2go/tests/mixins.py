@@ -1,7 +1,9 @@
+import urlparse
 import uuid
 from datetime import timedelta
 
 import mock
+from django.test import Client
 from django.utils import timezone
 from factory.fuzzy import FuzzyText
 from freezegun import freeze_time
@@ -97,3 +99,15 @@ class Ed2goTestMixin(ModuleStoreTestCase):
         tdelta = timezone.now() + timedelta(minutes=minutes)
         self.freeze_time(tdelta)
         return tdelta
+
+
+class SiteMixin(object):
+    domain = 'testserver.fake'
+
+    def setUp(self, *args, **kwargs):
+        super(SiteMixin, self).setUp(*args, **kwargs)
+        self.client = Client(SERVER_NAME=self.domain)
+
+    def get_full_url(self, path):
+        url = 'http://{}'.format(self.domain)
+        return urlparse.urljoin(url, path)
