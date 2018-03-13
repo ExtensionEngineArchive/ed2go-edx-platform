@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 import requests
 from django.conf import settings
@@ -248,6 +249,16 @@ class CourseSession(models.Model):
 
             self._update_completion_profile()
 
+    @property
+    def duration(self):
+        """
+        Duration of this session.
+        If the session is still active, duration is measured from the creation of this
+        session to the last activity, if not it's measured from the creation to the closing time.
+        """
+        last_activity = self.last_activity_at if self.active else self.closed_at
+        return last_activity - self.created_at
+
     @classmethod
     def total_time(cls, user, course_key):
         """
@@ -262,8 +273,7 @@ class CourseSession(models.Model):
             A timedelta object which represents the total time a user spent in a course.
         """
         qs = cls.objects.filter(user=user, course_key=course_key)  # pylint: disable=invalid-name
-        first = qs.earliest()
-        last = qs.latest()
-        latest_time = last.last_activity_at if last.active else last.closed_at
-
-        return latest_time - first.created_at
+        total_duration = timedelta()
+        for session in qs:
+            total_duration += session.duration
+        return total_duration
