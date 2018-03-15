@@ -225,7 +225,7 @@ def get_system_sass_dirs(system):
     return dirs
 
 
-def get_watcher_dirs(theme_dirs=None, themes=None):
+def get_watcher_dirs(theme_dirs=None, themes=None, system=None):
     """
     Return sass directories that need to be added to sass watcher.
 
@@ -243,24 +243,43 @@ def get_watcher_dirs(theme_dirs=None, themes=None):
             '/edx/app/edxapp/edx-platform/themes/red-theme/cms/static/sass/partials',
         ]
 
+        >> get_watcher_dirs('/edx/app/edx-platform/themes', ['red-theme'], lms)
+        [
+            'common/static',
+            'common/static/sass',
+            'lms/static/sass',
+            'lms/static/sass/partials',
+            '/edx/app/edxapp/edx-platform/themes/red-theme/lms/static/sass',
+            '/edx/app/edxapp/edx-platform/themes/red-theme/lms/static/sass/partials',
+        ]
+
     Parameters:
         theme_dirs (list): list of theme base directories.
-        themes (list): list containing names of themes
+        themes (list): list containing names of themes.
+        system (str): the system for which the assets are watched.
     Returns:
         (list): dirs that need to be added to sass watchers.
     """
     dirs = []
     dirs.extend(COMMON_LOOKUP_PATHS)
+    systems = list(system) if system else ALL_SYSTEMS
+
     if theme_dirs and themes:
         # Register sass watchers for all the given themes
         themes = get_theme_paths(themes=themes, theme_dirs=theme_dirs)
         for theme in themes:
-            for _dir in get_sass_directories('lms', theme) + get_sass_directories('cms', theme):
+            system_dirs = []
+            for sys in systems:
+                system_dirs.extend(get_sass_directories(sys, theme))
+            for _dir in system_dirs:
                 dirs.append(_dir['sass_source_dir'])
                 dirs.extend(_dir['lookup_paths'])
 
-    # Register sass watchers for lms and cms
-    for _dir in get_sass_directories('lms') + get_sass_directories('cms') + get_common_sass_directories():
+    # Register sass watchers for systems
+    system_dirs = []
+    for sys in systems:
+        system_dirs.extend(get_sass_directories(sys))
+    for _dir in system_dirs + get_common_sass_directories():
         dirs.append(_dir['sass_source_dir'])
         dirs.extend(_dir['lookup_paths'])
 
@@ -767,6 +786,7 @@ def listfy(data):
     ('background', 'b', 'Background mode'),
     ('theme-dirs=', '-td', 'The themes dir containing all themes (defaults to None)'),
     ('themes=', '-t', 'The themes to add sass watchers for (defaults to None)'),
+    ('system=', 's', 'The system to watch sass for (defaults to all)'),
 ])
 @timed
 def watch_assets(options):
@@ -779,6 +799,7 @@ def watch_assets(options):
 
     themes = get_parsed_option(options, 'themes')
     theme_dirs = get_parsed_option(options, 'theme_dirs', [])
+    system = get_parsed_option(options, 'system')
 
     if not theme_dirs and themes:
         # We can not add theme sass watchers without knowing the directory that contains the themes.
@@ -786,7 +807,7 @@ def watch_assets(options):
     else:
         theme_dirs = [path(_dir) for _dir in theme_dirs]
 
-    sass_directories = get_watcher_dirs(theme_dirs, themes)
+    sass_directories = get_watcher_dirs(theme_dirs, themes, system=system)
     observer = PollingObserver()
 
     CoffeeScriptWatcher().register(observer)
