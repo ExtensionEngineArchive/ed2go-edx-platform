@@ -62,6 +62,7 @@ from courseware.model_data import FieldDataCache
 from courseware.models import BaseStudentModuleHistory, StudentModule
 from courseware.url_helpers import get_redirect_url
 from courseware.user_state_client import DjangoXBlockUserStateClient
+from ed2go.utils import get_graded_chapters
 from edxmako.shortcuts import marketing_link, render_to_response, render_to_string
 from enrollment.api import add_enrollment
 from eventtracking import tracker
@@ -943,6 +944,8 @@ def _progress(request, course_key, student_id):
         'upgrade_link': check_and_get_upgrade_link(request, student, course.id),
         'upgrade_price': get_cosmetic_verified_display_price(course),
         # ENDTODO
+        # Ed2Go overrides:
+        'graded_chapters': get_graded_chapters(course, student)
     }
 
     with outer_atomic():
