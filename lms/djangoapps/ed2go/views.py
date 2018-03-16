@@ -3,15 +3,47 @@ import logging
 from django.conf import settings
 from django.contrib.auth import login
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from opaque_keys.edx.keys import CourseKey
+
+from courseware.courses import get_course_by_id
+from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+from openedx.features.course_experience.utils import get_course_outline_block_tree
 
 from ed2go import constants
 from ed2go.registration import get_or_create_user_completion_profile
 from ed2go.utils import request_valid
 
 LOG = logging.getLogger(__name__)
+
+
+class LearningPathView(View):
+    """Learning path page view."""
+    @method_decorator(login_required)
+    @method_decorator(cache_control(no_cache=True, no_store=True, must_revalidate=True))
+    def get(self, request, course_id, **kwargs):
+        """
+        Displays the learning path page for the specified course.
+        """
+        course_key = CourseKey.from_string(course_id)
+        course = get_course_by_id(course_key, depth=2)
+        course_block_tree = get_course_outline_block_tree(request, course_id)
+
+        context = {
+            'course': course,
+            'course_tree': course_block_tree,
+            'LANGUAGE_CODE': request.LANGUAGE_CODE,
+            'learning_path_class': 'active',
+            'platform_name': configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+            'request': request,
+        }
+        return render_to_response('ed2go/learning_path.html', context)
 
 
 class SSOView(View):
