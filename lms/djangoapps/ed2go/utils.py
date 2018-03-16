@@ -114,9 +114,11 @@ def extract_course_id_from_url(url):
         url (str): string from which the course ID is extracted.
 
     Returns:
-        The course ID string.
+        The course ID string, or None if no course ID was extracted.
     """
     result = re.search(settings.COURSE_KEY_REGEX, url)
+    if not result:
+        return None
     result = result.group()
     return result.split('/')[-1]
 

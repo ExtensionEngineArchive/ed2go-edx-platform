@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth import login
+from django.core.urlresolvers import reverse
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -51,4 +52,6 @@ class SSOView(View):
 
         user.backend = settings.AUTHENTICATION_BACKENDS[0]
         login(request, user)
-        return HttpResponseRedirect('/courses/{}'.format(completion_profile.course_key))
+        return HttpResponseRedirect(
+            reverse('course_root', kwargs={'course_id': completion_profile.course_key})
+        )

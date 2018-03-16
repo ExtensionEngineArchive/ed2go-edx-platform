@@ -86,7 +86,10 @@ def update_registration(registration_key):
     profile.name = student_data['FirstName'] + ' ' + student_data['LastName']
     profile.country = student_data['Country']
     profile.year_of_birth = parser.parse(student_data['Birthdate']).year
-    profile.meta['ReturnURL'] = registration_data['ReturnURL']
+
+    meta = json.loads(profile.meta) if profile.meta else {}
+    meta['ReturnURL'] = registration_data['ReturnURL']
+    profile.meta = json.dumps(meta)
     profile.save()
 
     return user

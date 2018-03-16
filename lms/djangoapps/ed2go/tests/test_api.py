@@ -1,15 +1,9 @@
-from datetime import timedelta
-
 import mock
 from django.core.urlresolvers import reverse
 from django.test import RequestFactory, TestCase
-from django.utils import timezone
-from freezegun import freeze_time
 from opaque_keys.edx.keys import CourseKey
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
-
-from student.tests.factories import UserFactory
 
 from ed2go import constants
 from ed2go.api.views import ActionView, CourseSessionView
@@ -20,10 +14,8 @@ from ed2go.tests.mixins import Ed2goTestMixin
 class ActionViewTests(Ed2goTestMixin, TestCase):
     url = reverse('ed2go.api:action')
 
-    def setUp(self, *args, **kwargs):
-        super(ActionViewTests, self).setUp(*args, **kwargs)
-        self.username = 'tester'
-        self.user = UserFactory.create(username=self.username, password='password')
+    def setUp(self):
+        self.user = self.create_user()
 
     def _make_request(self, action, reg_key='dummy-key', valid_request=True):
         request = Request(APIRequestFactory().post(
@@ -76,13 +68,11 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
 
 
 class CourseSessionTests(Ed2goTestMixin, TestCase):
-    now = timezone.now()
     url = reverse('ed2go.api:course-session')
 
     def setUp(self):
-        self.username = 'tester'
         self.course_key = 'course-v1:test+test+test'
-        self.user = UserFactory.create(username=self.username, password='password')
+        self.user = self.create_user()
 
     def _make_request(self):
         request = RequestFactory().post(
@@ -92,15 +82,10 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
             response = CourseSessionView().post(request)
         return response
 
-    def _freeze_time(self, time):
-        freezer = freeze_time(time)
-        freezer.start()
-        self.addCleanup(freezer.stop)
-
     def test_create_new(self):
         """Creates new CourseSession object."""
         self.assertEqual(CourseSession.objects.count(), 0)
-        self._freeze_time(self.now)
+        now = self.freeze_time()
 
         response = self._make_request()
         self.assertEqual(response.status_code, 204)
@@ -111,14 +96,13 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
 
         self.assertEqual(session.user, self.user)
         self.assertEqual(session.course_key, course_key)
-        self.assertEqual(session.created_at, self.now)
+        self.assertEqual(session.created_at, now)
         self.assertTrue(session.active)
 
     def test_update(self):
         """Updates existing CourseSession."""
         session = self.create_course_session(user=self.user, course_key=self.course_key)
-        tdelta = self.now + timedelta(minutes=10)
-        self._freeze_time(tdelta)
+        tdelta = self.postpone_freeze_time()
         self._make_request()
         session.refresh_from_db()
 
