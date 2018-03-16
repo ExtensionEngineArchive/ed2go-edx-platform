@@ -12,6 +12,7 @@ from ratelimitbackend import admin
 from courseware.views.index import CoursewareIndex
 from courseware.views.views import CourseTabView, EnrollStaffView, StaticCourseTabView
 from django_comment_common.models import ForumsConfig
+from ed2go.views import LearningPathView
 from openedx.core.djangoapps.auth_exchange.views import LoginWithAccessTokenView
 from openedx.core.djangoapps.catalog.models import CatalogIntegration
 from openedx.core.djangoapps.programs.models import ProgramsApiConfig
@@ -201,6 +202,9 @@ COURSE_URLS = patterns(
         'lms.djangoapps.instructor.views.registration_codes.registration_code_details',
         name='registration_code_details',
     ),
+
+    # ED2GO
+    url(r'^learning_path', LearningPathView.as_view(), name='learning_path'),
 )
 urlpatterns += (
     # jump_to URLs for direct access to a location in the course
