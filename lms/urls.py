@@ -418,13 +418,12 @@ urlpatterns += (
         name='courseware_position',
     ),
 
-    # We don't allow users access to progress page
-    # ED2GO-8
+    # progress page
     url(
-        r'^courses/{}/progress'.format(
+        r'^courses/{}/progress$'.format(
             settings.COURSE_ID_PATTERN,
         ),
-        RedirectView.as_view(url='/'),
+        'courseware.views.views.progress',
         name='progress',
     ),
 

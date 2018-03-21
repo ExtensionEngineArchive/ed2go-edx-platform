@@ -1,6 +1,7 @@
 import hashlib
 import re
 import urllib
+from collections import defaultdict
 from xml.etree import ElementTree
 from random import randint
 
@@ -9,6 +10,8 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.timezone import now
+
+from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 
 from ed2go import constants
 
@@ -346,3 +349,66 @@ def format_timedelta(tdelta):
         minutes=minutes,
         seconds=seconds
     )
+
+
+def get_graded_chapters(course, student):
+    """Extract the graded chapters and grading information from them in a course.
+
+    Args:
+        course (Course): The course from which the chapters are extracted.
+        student (User): The student whose grading information is extracted.
+
+    Returns:
+        A list of graded chapters. Each chapter is a dictionary containing:
+            * display_name: Name of the chapter
+            * url_name:
+            * started: Wether the student attempted any problems in this chapter
+            * grade_percent: Percent of chapter assignments finished
+            * perc_of_total: Percent of how much of the total grade this chapter weights
+            * sections: list of sections (type SubsectionGrade)
+            * total_section_type: Dictionary containing total possible grade for each
+                grading policy assignment type contained in this chapter
+    """
+    course_grade = CourseGradeFactory().create(student, course)
+    courseware_summary = course_grade.chapter_grades.values()
+
+    graded_chapters = []
+    # total number of occurences of different graded assignment types
+    total_num_grade_types = defaultdict(int)
+
+    for chapter in courseware_summary:
+        if not chapter['display_name'] == 'hidden':
+            started = False
+            graded_chapter = chapter.copy()
+            total_earned, total_possible = 0, 0
+            graded_sections = []
+            total_section_type = {}
+
+            for section in chapter['sections']:
+                if section.graded:
+                    started = True if section.graded_total.first_attempted else started
+                    total_earned += section.graded_total.earned
+                    total_possible += section.graded_total.possible
+                    total_section_type[section.format] = total_possible
+                    total_num_grade_types[section.format] += total_possible
+                    graded_sections.append(section)
+
+            if graded_sections:
+                graded_chapter['started'] = started
+                graded_chapter['grade_percent'] = int((total_earned / total_possible) * 100)
+                graded_chapter['sections'] = graded_sections
+                graded_chapter['total_section_type'] = total_section_type
+                graded_chapters.append(graded_chapter)
+
+    # percentage of grade for single unit of each assignment type
+    unit_grade = {}
+    for grader in course.grading_policy['GRADER']:
+        unit_grade[grader['type']] = (grader['weight'] * 100) / total_num_grade_types[grader['type']]
+
+    for chapter in graded_chapters:
+        perc_of_total = 0
+        for k, v in chapter['total_section_type'].items():
+            perc_of_total += unit_grade[k] * v
+        chapter['perc_of_total'] = round(perc_of_total)
+
+    return graded_chapters
