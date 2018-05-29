@@ -1,0 +1,38 @@
+#dashboard-main {
+  min-width: auto;
+
+  #my-courses {
+    @include media($tablet-large) {
+      width: 100%;
+      padding: 0 20px;
+    }
+
+    .course-item {
+      .wrapper-course-image {
+        @include media($tablet-large) {
+          width: 100%;
+          margin-right: 0;
+        }
+
+        .cover {
+          @include media($tablet-large) {
+            float: none;
+            max-height: none;
+          }
+        }
+      }
+
+      .wrapper-course-details {
+        @include media($tablet-large) {
+          width: 100%;
+        }
+
+        .course-info {
+          @include media($tablet-large) {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}

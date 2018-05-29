@@ -1,0 +1,189 @@
+@mixin chapter-title-text {
+  margin-bottom: 0;
+  color: $ed-dark-grey!important;
+  line-height: 50px!important;
+  font-size: 20px!important;
+  font-weight: 400!important;
+}
+
+.view-progress {
+  .wrapper-course-material {
+    display: block;
+    height: auto;
+    background-color: $white;
+    text-align: left;
+  }
+
+  .container {
+    background-color: $lightest-grey;
+
+    .profile-wrapper {
+      background-color: transparent;
+    }
+  }
+}
+
+
+#course-info-progress {
+  @include media($tablet-large) {
+    padding: 0;
+  }
+
+  .progress-certificates-title { margin-bottom: 30px; }
+
+  h1.title {
+    color: $ed-dark-grey!important;
+    font-weight: 400!important;
+
+    @include media($tablet-large) {
+      padding-top: 20px;
+      text-align: center;
+    }
+  }
+}
+
+#assignments-table {
+  @include span-columns(12);
+
+  .chapter-element-total {
+    .chapter-title {
+      text-indent: 40px;
+
+      @include media($screen-small) {
+        text-indent: 10px;
+      }
+    }
+  }
+
+  .chapter-element {
+    margin-bottom: 30px;
+    background-color: #fff;
+
+    .chapter-element-header {
+      @include clearfix;
+      border: 1px solid $ed-light-grey;
+      padding: 0 10px;
+      min-height: 50px;
+
+      .chapter-title {
+        @include span-columns(9);
+        min-width: 300px;
+        text-align: left;
+
+        @include media($screen-small) {
+          @include span-columns(7);
+        }
+        @include media($tablet-large) {
+          @include span-columns(12);
+          min-width: 0px;
+        }
+
+        h2 {
+          @include chapter-title-text;
+        }
+
+        img {
+          float: left;
+        }
+
+        span {
+          padding-left: 10px;
+          color: $ed-med-grey;
+          font-size: 16px;
+
+          @include media($tablet-large) {
+            display: block;
+            padding-left: 0;
+          }
+        }
+      }
+
+      .not-started {
+        @include span-columns(3);
+        @include chapter-title-text;
+        text-align: right;
+        font-size: 18px!important;
+
+        @include media($screen-small) {
+          @include span-columns(5);
+        }
+        @include media($tablet-large) {
+          @include span-columns(12);
+          text-align: center;
+        }
+      }
+
+      .progress-bar-wrapper {
+        @include span-columns(3);
+        padding: 13px 0px;
+
+        @include media($screen-small) {
+          @include span-columns(5);
+        }
+        @include media($tablet-large) {
+          @include span-columns(12);
+        }
+
+        .progress-bar {
+          margin-left: auto;
+          border: 1px solid $ed-light-grey;
+          border-radius: 10px;
+          width: 200px;
+          height: 20px;
+          background-color: transparent;
+
+          @include media($tablet-large) {
+            width: 100%;
+            margin-left: 0;
+          }
+
+          .legend {
+            position: absolute;
+            left: 50%;
+            top: -8px;
+
+            & > div { display: none; }
+
+            table {
+              position: relative!important;
+              left: -50%!important;
+
+              .legendColorBox { display: none; }
+
+              .legendLabel {
+                color: $ed-dark-grey;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .chapter-sections {
+      .chapter-section {
+        border: 1px solid $ed-light-grey;
+        border-top: none;
+        background-color: $ed-lighter-grey;
+        padding: 10px 20px;
+        min-height: 20px;
+        color: $ed-dark-grey!important;
+        line-height: 20px;
+        font-weight: 400!important;
+
+        .section-title {
+          font-weight: 400;
+        }
+
+        .section-grade {
+          float: right;
+
+          @include media($tablet-large) {
+            float: none;
+            margin-left: 10px;
+          }
+        }
+      }
+    }
+  }
+}

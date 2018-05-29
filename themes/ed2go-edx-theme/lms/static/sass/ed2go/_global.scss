@@ -1,0 +1,22 @@
+html, body {
+  color: $black !important;
+  font: normal 300 16px/22px Open Sans !important;
+}
+
+h1, h2 {
+  color: $ed-grey-two !important;
+  font: normal 300 28pt Open Sans !important;
+}
+
+h2 {
+   a {
+     color: $ed-blue-one !important;
+   }
+}
+
+label {
+  color: $black !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font: normal 700 14px Open sans !important;
+}
