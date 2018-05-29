@@ -9,7 +9,7 @@ LOGGING['handlers']['local'] = LOGGING['handlers']['tracking'] = {
 
 LOGGING['loggers']['tracking']['handlers'] = ['console']
 
-LMS_ROOT_URL = 'http://edx.devstack.lms:18000'
+LMS_ROOT_URL = 'http://ed2go.lms:18000'
 
 FEATURES.update({
     'ENABLE_COURSEWARE_INDEX': False,
