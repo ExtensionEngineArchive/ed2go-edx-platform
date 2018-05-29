@@ -1,0 +1,61 @@
+body.view-learning-path.view-in-course {
+    .window-wrap {
+        min-width: 0;
+    }
+}
+
+.learning-path-main {
+    .course-sections {
+        background-color: $lightest-grey;
+
+        .course-section-wrapper {
+            display: inline-block;
+            padding: 10px 5px;
+            background-color: $lightest-grey;
+
+            .course-section {
+                padding: 10px;
+                border: 1px solid $ed-light-grey;
+                border-radius: 10px;
+                background-color: $white;
+
+                .course-section-header {
+                    display: -webkit-box;
+                    overflow: hidden;
+                    height: 50px;
+                    margin-bottom: 15px;
+                    font-size: 18px;
+                    text-align: center;
+                    line-height: 25px;
+                    transform: translateY(10px);
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                }
+
+                a.btn {
+                    &:hover, &:visited, &:active {
+                        color: $white;
+                    }
+
+                    margin: 15px 15% 5px;
+                    width: 70%;
+                    background-color: $ed-blue-one;
+                    border-color: $ed-blue-one;
+                }
+            }
+        }
+    }
+
+    .course-view.container {
+        padding-bottom: 50px;
+        background-color: $lightest-grey;
+    }
+
+    .profile-wrapper {
+        background-color: $lightest-grey;
+    }
+
+    .page-header {
+        border: none;
+    }
+}

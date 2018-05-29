@@ -1,0 +1,10 @@
+$mobile-small: 320px;
+$mobile-large: 360px;
+$tablet-small: 480px;
+$tablet-large: 768px;
+$screen-small: 1024px;
+$screen-large: 1280px;
+
+@mixin media($width) {
+  @media screen and (max-width: $width) { @content; }
+}

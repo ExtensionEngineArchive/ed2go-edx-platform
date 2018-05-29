@@ -1,0 +1,26 @@
+@import 'ed2go/media';
+
+@import 'lms/static/sass/lms-course';
+@import 'ed2go/course-tabs';
+
+#course-content {
+  .sequence-list-wrapper {
+    @include media($tablet-large) {
+      width: 100px;
+      overflow-x: scroll;
+      overflow-y: hidden;
+    }
+
+    li {
+      @include media($tablet-large) {
+        min-width: 60px;
+      }
+
+      .sequence-tooltip {
+        @include media($tablet-large) {
+          display: none;
+        }
+      }
+    }
+  }
+}

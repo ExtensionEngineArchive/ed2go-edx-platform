@@ -1,0 +1,41 @@
+{% extends 'main_django.html' %}
+{% load theme_pipeline staticfiles %}
+
+{% block title %}Learning Path | {{ platform_name }}{% endblock %}
+
+{% block bodyclass %}view-in-course view-learning-path{% endblock %}
+
+{% block headextra %}
+  {% stylesheet 'style-course' %}
+{% endblock %}
+
+{% block body %}
+  {% include "courseware/course_navigation.html" with active_page_context="learning_path" %}
+
+  <main id="main" class="learning-path-main col-xs-12" aria-label="Content" class="content-wrapper" tabindex="-1">
+    <div class="course-view container">
+      <div class="profile-wrapper">
+
+        <header class="page-header">
+          <h2 class="page-title">Learning Path: {{ course_tree.display_name }}</h2>
+        </header>
+
+        <section class="container-fluid">
+          <div class="row course-sections">
+
+            {% for section in course_tree.children %}
+              <div class="course-section-wrapper col-lg-4 col-md-6 col-xs-12">
+                <div class="course-section">
+                  <h3 class="course-section-header">{{ section.display_name }}</h3>
+                  <a href="{{ section.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                </div>
+              </div>
+            {% endfor %}
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+{% endblock %}

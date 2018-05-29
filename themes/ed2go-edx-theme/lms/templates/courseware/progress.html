@@ -1,0 +1,122 @@
+<%page expression_filter="h"/>
+<%inherit file="/main.html" />
+<%namespace name='static' file='/static_content.html'/>
+<%def name="online_help_token()"><% return "progress" %></%def>
+<%!
+from course_modes.models import CourseMode
+from certificates.models import CertificateStatuses
+from django.utils.translation import ugettext as _
+from openedx.core.djangolib.markup import HTML, Text
+from django.core.urlresolvers import reverse
+from django.conf import settings
+from django.utils.http import urlquote_plus
+%>
+<%block name="bodyclass">view-in-course view-progress</%block>
+
+<%block name="headextra">
+<%static:css group='style-course-vendor'/>
+<%static:css group='style-course'/>
+</%block>
+
+
+<%namespace name="progress_graph" file="/courseware/progress_graph.js"/>
+
+<%block name="pagetitle">${_("{course_number} Progress").format(course_number=course.display_number_with_default)}</%block>
+
+<%block name="js_extra">
+<script type="text/javascript" src="${static.url('js/vendor/flot/jquery.flot.js')}"></script>
+<script type="text/javascript" src="${static.url('js/vendor/flot/jquery.flot.stack.js')}"></script>
+<script type="text/javascript" src="${static.url('js/vendor/flot/jquery.flot.symbol.js')}"></script>
+<script type="text/javascript" src="${static.url('js/courseware/certificates_api.js')}"></script>
+<script type="text/javascript" src="${static.url('js/courseware/credit_progress.js')}"></script>
+<script type="text/javascript" src="${static.url('js/progress_page.js')}"></script>
+<script>
+  ${progress_graph.body(grade_summary, course.grade_cutoffs, "grade-detail-graph", not course.no_grade, not course.no_grade)}
+</script>
+</%block>
+
+<%include file="/courseware/course_navigation.html" args="active_page='progress'" />
+
+<main id="main" aria-label="Content" tabindex="-1">
+  <div class="container">
+    <div class="profile-wrapper">
+      <section class="course-info" id="course-info-progress"
+        % if getattr(course, 'language'):
+        lang="${course.language}"
+        % endif
+        >
+
+        % if staff_access and studio_url is not None:
+        <div class="wrap-instructor-info">
+          <a class="instructor-info-action studio-view" href="${studio_url}">${_("View Grading in studio")}</a>
+        </div>
+        <h2 class="hd hd-2 progress-certificates-title">
+          ${_("Course Progress for Student '{username}' ({email})").format(username=student.username, email=student.email)}
+        </h2>
+        % endif
+
+        <h1 class="title">Assignments</h1>
+
+        %if courseware_summary:
+        <div id="assignments-table">
+          <div class="chapter-element chapter-element-total">
+            <div class="chapter-element-header">
+              <div class="chapter-title">
+                <h2>TOTAL GRADE</h2>
+              </div>
+              <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="total-progress-bar" data-progress="${int(grade_summary['percent'] * 100)}"></div>
+              </div>
+            </div>
+          </div>
+          %if graded_chapters:
+            %for ch in graded_chapters:
+            <div class="chapter-element">
+              <div class="chapter-element-header">
+                <div class="chapter-title">
+                  <img src="${static.url('images/lesson-icon.png')}" alt="Lesson icon">
+                  <h2>
+                    ${ch['display_name']}
+                    <span>${'{}%'.format(int(ch['perc_of_total']))} of your grade</span>
+                  </h2>
+                </div>
+                %if ch['started']:
+                <div class="progress-bar-wrapper">
+                  <div class="progress-bar" data-progress="${ch['grade_percent']}"></div>
+                </div>
+                %else:
+                <h2 class="not-started">Not Started</h2>
+                %endif
+              </div>
+              <div class="chapter-sections">
+                %for section in ch['sections']:
+                  <%
+                    earned = int(section.all_total.earned)
+                    total = int(section.all_total.possible)
+                    percentageString = '{0:.0%}'.format(float(earned)/total)
+                  %>
+                  <div class="chapter-section">
+                    <a href="${reverse(
+                      'courseware_section',
+                      kwargs=dict(course_id=course.id.to_deprecated_string(),
+                      chapter=ch['url_name'],
+                      section=section.url_name)
+                    )}" class="section-title">
+                      ${section.display_name}
+                    </a>
+                    <span class="section-grade">${earned}/${total} (${percentageString})</span>
+                  </div>
+                %endfor
+              </div>
+            </div>
+            %endfor
+          %endif
+        </div>
+        %endif
+      </section>
+    </div>
+  </div>
+</main>
+<%static:require_module_async module_name="js/dateutil_factory" class_name="DateUtilFactory">
+  DateUtilFactory.transform(iterationKey=".localized-datetime");
+</%static:require_module_async>

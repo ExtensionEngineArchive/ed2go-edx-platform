@@ -1,0 +1,13 @@
+@import 'lms/static/sass/lms-main-v1';
+
+// Ed2Go overrides
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,600,700');
+@import 'ed2go/media';
+
+@import 'ed2go/global';
+@import 'ed2go/header';
+@import 'ed2go/course-info';
+@import 'ed2go/progress-page';
+@import 'ed2go/homepage';
+@import 'ed2go/dashboard';
+@import 'ed2go/learning-path';
