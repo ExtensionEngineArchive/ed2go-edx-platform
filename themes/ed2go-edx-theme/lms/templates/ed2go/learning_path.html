@@ -27,7 +27,7 @@
               <div class="course-section-wrapper col-lg-4 col-md-6 col-xs-12">
                 <div class="course-section">
                   <h3 class="course-section-header">{{ section.display_name }}</h3>
-                  <a href="{{ section.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                  <a href="{{ section.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
                 </div>
               </div>
             {% endfor %}
