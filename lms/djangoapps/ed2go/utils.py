@@ -403,7 +403,10 @@ def get_graded_chapters(course, student):
     # percentage of grade for single unit of each assignment type
     unit_grade = {}
     for grader in course.grading_policy['GRADER']:
-        unit_grade[grader['type']] = (grader['weight'] * 100) / total_num_grade_types[grader['type']]
+        if total_num_grade_types[grader['type']]:
+            unit_grade[grader['type']] = (grader['weight'] * 100) / total_num_grade_types[grader['type']]
+        else:
+            unit_grade[grader['type']] = 0
 
     for chapter in graded_chapters:
         perc_of_total = 0
