@@ -395,7 +395,7 @@ def get_graded_chapters(course, student):
 
             if graded_sections:
                 graded_chapter['started'] = started
-                graded_chapter['grade_percent'] = int((total_earned / total_possible) * 100)
+                graded_chapter['grade_percent'] = int((total_earned / total_possible) * 100) if total_possible else 0
                 graded_chapter['sections'] = graded_sections
                 graded_chapter['total_section_type'] = total_section_type
                 graded_chapters.append(graded_chapter)
