@@ -53,6 +53,15 @@ from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_
         </div>
     </div>
 % else:
+    <script>
+        $('body').click(function(event){
+            if (!$(event.target).closest('ul.user-dropdown-menu').length) {
+                var toggleButton = $('ol.user').find('button.user-link.user-dropdown');
+                if (toggleButton.hasClass('active'))
+                    toggleButton.click();
+            }
+        });
+    </script>
     <ol class="user">
         <li class="primary">
             <button class="user-link user-dropdown">
