@@ -52,7 +52,8 @@ def get_or_create_user_completion_profile(registration_key):
                 country=student_data['Country'],
                 year_of_birth=parser.parse(student_data['Birthdate']).year,
                 meta=json.dumps({
-                    'ReturnURL': registration_data['ReturnURL']
+                    'ReturnURL': registration_data['ReturnURL'],
+                    'StudentKey': registration_data['Student']['StudentKey']
                 })
             )
             completion_profile = CompletionProfile.objects.create(
@@ -70,6 +71,7 @@ def update_registration(registration_key):
         * country
         * year_of_birth
         * ReturnURL
+        * StudentKey
 
     Args:
         registration_key (str): The registration key with which data is fetched
@@ -87,9 +89,10 @@ def update_registration(registration_key):
     profile.country = student_data['Country']
     profile.year_of_birth = parser.parse(student_data['Birthdate']).year
 
-    meta = json.loads(profile.meta) if profile.meta else {}
+    meta = profile.get_meta() if profile.meta else {}
     meta['ReturnURL'] = registration_data['ReturnURL']
-    profile.meta = json.dumps(meta)
+    meta['StudentKey'] = registration_data['Student']['StudentKey']
+    profile.set_meta(meta)
     profile.save()
 
     return user

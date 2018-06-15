@@ -3229,4 +3229,5 @@ REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = False
 
 ED2GO_SESSION_INACTIVITY_THRESHOLD = 15 * 60  # in seconds
 ED2GO_REGISTRATION_SERVICE_URL = 'https://api.ed2go.com/sandbox/vendor/1.2/RegistrationService.asmx'
+ED2GO_SUPPORT_URL = 'https://www.ed2go.com/lti/link/support'
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
