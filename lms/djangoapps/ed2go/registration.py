@@ -42,6 +42,8 @@ def get_or_create_user_completion_profile(registration_key):
             )
         except User.DoesNotExist:
             user = User.objects.create(
+                first_name=student_data['FirstName'],
+                last_name=student_data['LastName'],
                 username=generate_username(student_data['FirstName']),
                 email=student_data['Email'],
                 is_active=True
@@ -83,6 +85,9 @@ def update_registration(registration_key):
     registration_data = get_registration_data(registration_key)
     student_data = registration_data['Student']
     user = User.objects.get(email=student_data['Email'])
+
+    user.first_name = student_data['FirstName']
+    user.last_name = student_data['LastName']
 
     profile = UserProfile.objects.get(user=user)
     profile.name = student_data['FirstName'] + ' ' + student_data['LastName']
