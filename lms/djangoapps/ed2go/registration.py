@@ -42,6 +42,8 @@ def get_or_create_user_completion_profile(registration_key):
             )
         except User.DoesNotExist:
             user = User.objects.create(
+                first_name=student_data['FirstName'],
+                last_name=student_data['LastName'],
                 username=generate_username(student_data['FirstName']),
                 email=student_data['Email'],
                 is_active=True
