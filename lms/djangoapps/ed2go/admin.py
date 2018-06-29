@@ -10,4 +10,4 @@ class CompletionProfileAdmin(admin.ModelAdmin):
 
 @admin.register(CourseSession)
 class CourseSessionAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'user', 'course_key', 'created_at', 'last_activity_at', 'active')
+    list_display = ('pk', 'user', 'course_key', 'created_at', 'last_activity_at', 'closed_at', 'active')
