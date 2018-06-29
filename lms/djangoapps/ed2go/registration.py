@@ -86,6 +86,9 @@ def update_registration(registration_key):
     student_data = registration_data['Student']
     user = User.objects.get(email=student_data['Email'])
 
+    user.first_name = student_data['FirstName']
+    user.last_name = student_data['LastName']
+
     profile = UserProfile.objects.get(user=user)
     profile.name = student_data['FirstName'] + ' ' + student_data['LastName']
     profile.country = student_data['Country']
