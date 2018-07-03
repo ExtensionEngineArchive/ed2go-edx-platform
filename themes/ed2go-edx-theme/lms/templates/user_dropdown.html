@@ -17,6 +17,7 @@ from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_
 
 <%
 self.support_url = settings.ED2GO_SUPPORT_URL + '?u=' + self.real_user.profile.get_meta().get('StudentKey','')
+self.courses_url = settings.ED2GO_URL + '/student-center'
 %>
 % if uses_bootstrap:
     <li class="nav-item nav-item-hidden-collapsed">
@@ -50,7 +51,7 @@ self.support_url = settings.ED2GO_SUPPORT_URL + '?u=' + self.real_user.profile.g
         <div role="group" aria-label="User menu" class="user-menu">
             <ul class="dropdown-menu list-divided is-hidden" id="${_("Usermenu")}" tabindex="-1">
                 <%block name="navigation_dropdown_menu_links" >
-                    <li class="dropdown-item item has-block-link"><a href="${reverse('dashboard')}" role="menuitem" class="action dropdown-menuitem">${_("My Courses")}</a></li>
+                    <li class="dropdown-item item has-block-link"><a href="${self.courses_url}" role="menuitem" class="action dropdown-menuitem">${_("My Courses")}</a></li>
                     <li class="dropdown-item item has-block-link"><a href="${self.support_url}" role="menuitem" class="action dropdown-menuitem">${_("Student Support")}</a></li>
                 </%block>
                 <li class="dropdown-item item has-block-link"><a href="${reverse('logout')}" role="menuitem" class="action dropdown-menuitem">${_("Sign Out")}</a></li>
