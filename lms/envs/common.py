@@ -3224,9 +3224,6 @@ STUDENT_LOGIN_URL = 'https://www.ed2go.com/student-login/'
 
 LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
 
-# If True every HTTP request to LMS is redirected to ED2GO login page
-REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = True
-
 ED2GO_SESSION_INACTIVITY_THRESHOLD = 2 * 60 * 60  # in seconds
 ED2GO_REGISTRATION_SERVICE_URL = 'https://api.ed2go.com/sandbox/vendor/1.2/RegistrationService.asmx'
 ED2GO_SUPPORT_URL = 'https://www.ed2go.com/lti/link/support'

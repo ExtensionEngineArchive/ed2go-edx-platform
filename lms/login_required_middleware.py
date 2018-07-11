@@ -1,5 +1,8 @@
 from django.conf import settings
 from django.http import HttpResponseRedirect
+from waffle import switch_is_active
+
+from ed2go.constants import REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN
 
 
 class LoginRequiredMiddleware:
@@ -13,8 +16,8 @@ class LoginRequiredMiddleware:
     """
     def process_request(self, request):
         assert hasattr(request, 'user')
-        # If REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN is true, every HTTP request on the LMS will be
+        # If REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN is active, every HTTP request on the LMS will be
         # redirected to ED2GO LOGIN URL
-        if settings.REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN:
+        if switch_is_active(REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN):
             if not request.user.is_authenticated():
                 return HttpResponseRedirect(settings.STUDENT_LOGIN_URL)
