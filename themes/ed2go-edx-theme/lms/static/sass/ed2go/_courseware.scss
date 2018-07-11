@@ -1,0 +1,25 @@
+body {
+    -webkit-font-smoothing: unset;
+}
+
+.user-menu {
+    ul#Usermenu {
+        position: absolute;
+        top: 60px;
+        left: -150px;
+    }
+
+    .is-visible {
+        display: block;
+    }
+}
+
+.header-global.slim .wrapper-header {
+    .dropdown-menu-container {
+        .dropdown-menu .item {
+            a.dropdown-menuitem {
+                font-weight: 400;
+            }
+        }
+    }
+}

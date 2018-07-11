@@ -395,7 +395,7 @@ def get_graded_chapters(course, student):
 
             if graded_sections:
                 graded_chapter['started'] = started
-                graded_chapter['grade_percent'] = int((total_earned / total_possible) * 100)
+                graded_chapter['grade_percent'] = int((total_earned / total_possible) * 100) if total_possible else 0
                 graded_chapter['sections'] = graded_sections
                 graded_chapter['total_section_type'] = total_section_type
                 graded_chapters.append(graded_chapter)
@@ -403,7 +403,10 @@ def get_graded_chapters(course, student):
     # percentage of grade for single unit of each assignment type
     unit_grade = {}
     for grader in course.grading_policy['GRADER']:
-        unit_grade[grader['type']] = (grader['weight'] * 100) / total_num_grade_types[grader['type']]
+        if total_num_grade_types[grader['type']]:
+            unit_grade[grader['type']] = (grader['weight'] * 100) / total_num_grade_types[grader['type']]
+        else:
+            unit_grade[grader['type']] = 0
 
     for chapter in graded_chapters:
         perc_of_total = 0

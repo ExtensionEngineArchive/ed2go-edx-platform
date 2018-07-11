@@ -1,0 +1,44 @@
+.ed2go-header {
+  color: $ed-lighter-grey !important;
+  font-size: 1rem !important;
+  font-weight: 400;
+}
+
+.header-global {
+  min-height: 60px;
+
+  @include media($tablet-large) {
+    height: auto;
+  }
+
+  .wrapper-header {
+    @include media($tablet-large) {
+      height: auto;
+    }
+  }
+
+  .user {
+    .user-dropdown-menu {
+      top: 60px;
+      right: 30px;
+      width: 160px;
+      border-radius: 10px;
+
+      li.dropdown-item {
+        padding: 5px 0 0;
+      }
+    }
+
+    .primary {
+      .user-link.user-dropdown {
+        outline: none;
+        background: $ed-blue-one;
+        color: $ed-lighter-grey;
+        font-family: 'Open Sans';
+      }
+    }
+  }
+  .menu-title {
+    color: $ed-lighter-grey !important;
+  }
+}

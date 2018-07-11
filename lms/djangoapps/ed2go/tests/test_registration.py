@@ -15,7 +15,8 @@ REGISTRATION_DATA = {
         'LastName': 'last-name',
         'Email': 'tester@example.com',
         'Country': 'US',
-        'Birthdate': '{}-01-01T08:00:00Z'.format(YEAR_OF_BIRTH)
+        'Birthdate': '{}-01-01T08:00:00Z'.format(YEAR_OF_BIRTH),
+        'StudentKey': '60accf5f-51f1-4a73-8b70-9654a00ce4ab'
     },
     'Course': {
         'Code': 'test123'
@@ -66,7 +67,8 @@ class RegistrationTests(Ed2goTestMixin, TestCase):
         self.assertEqual(user.profile.country == student_data['Country'], equal)
         self.assertEqual(user.profile.year_of_birth == YEAR_OF_BIRTH, equal)
         if user.profile.meta:
-            self.assertEqual(json.loads(user.profile.meta)['ReturnURL'] == REGISTRATION_DATA['ReturnURL'], equal)
+            self.assertEqual(user.profile.get_meta()['ReturnURL'] == REGISTRATION_DATA['ReturnURL'], equal)
+            self.assertEqual(user.profile.get_meta()['StudentKey'] == REGISTRATION_DATA['Student']['StudentKey'], equal)
 
     @mock.patch('ed2go.models.CompletionProfile._get_problems_videos', mock.Mock(return_value=({}, {})))
     @mock.patch('ed2go.registration.get_registration_data', mock.Mock(return_value=REGISTRATION_DATA))

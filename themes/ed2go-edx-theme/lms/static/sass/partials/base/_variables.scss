@@ -1,0 +1,21 @@
+@import 'lms/static/sass/partials/base/variables';
+
+//Ed2go colors
+
+$ed-blue-one: #009DDC;
+$ed-dark-grey: #143949;
+$ed-darker-grey: #081f28;
+$ed-green-one: #24b776;
+$ed-grey-two: #666666;
+$ed-light-grey: #dcdcdc;
+$ed-lighter-grey: #f1f3f4;
+$ed-med-grey: #a5a5a5;
+$ed-orange-one: #F98027;
+$ed-red: #f81b1b;
+
+//Overrides the default variables
+
+$header-bg: $ed-blue-one;
+$footer-bg: $ed-light-grey;
+
+$lightest-grey: #f9f9f9;

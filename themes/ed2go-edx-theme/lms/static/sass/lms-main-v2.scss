@@ -1,0 +1,86 @@
+@import 'lms/static/sass/lms-main-v2';
+@import 'ed2go/media';
+
+@import 'ed2go/header';
+@import 'ed2go/course-tabs';
+@import 'ed2go/courseware';
+
+
+.header-global.slim .wrapper-header {
+  max-width: 1200px;
+
+  .dropdown-menu-container {
+    margin-right: 20px;
+
+    .menu-button {
+      width: 100%;
+      color: $ed-lighter-grey;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .dropdown-menu {
+      top: 60px;
+      right: 12px;
+      width: 155px;
+      padding: 5px 10px;
+      border: 1px solid #e2e2e2;
+      border-radius: 10px;
+      box-shadow: 0 2px 2px 0 rgba(0,0,0,0.3);
+      background: $white;
+
+      .item {
+        padding: 10px 0 10px 5px;
+        margin-bottom: 0;
+        border-bottom: 1px $border-color-2 dotted;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        a {
+          color: #0075CC;
+          font-weight: 300;
+
+          &:hover, &:focus {
+            color: $base-font-color;
+            text-decoration: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+.content-wrapper {
+  max-width: 100%!important;
+
+  .wrapper-course-material {
+    background-color: $white;
+
+    .course-material {
+      max-width: 1180px!important;
+      margin: 0 auto!important;
+      padding: 10px 0 0 0;
+
+      .tabs {
+        padding: 0;
+        font-weight: 400;
+
+        .tab {
+          display: inline-block;
+          float: none;
+        }
+
+        a {
+          color: #5e5e5e;
+        }
+      }
+    }
+  }
+
+  #course-container {
+    max-width: 1180px;
+    margin: 30px auto;
+  }
+}

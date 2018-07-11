@@ -1,0 +1,40 @@
+.wrapper-course-material {
+  border-bottom: 1px solid $ed-med-grey;
+
+  .course-tabs li {
+    @include media($tablet-large) {
+      display: block;
+    }
+
+    a:active,
+    a:focus,
+    a:hover,
+    a.active,
+    a.active:hover,
+    a.active:visited,
+    a:visited:hover {
+      color: $ed-blue-one;
+      border-bottom-color: $ed-blue-one;
+    }
+  }
+}
+
+.container {
+  > div {
+    border: none;
+    box-shadow: none;
+  }
+
+  .page-header-main {
+    @include media($tablet-large) {
+      width: 100%;
+    }
+  }
+
+  .handouts {
+    @include media($tablet-large) {
+      display: block!important;
+      width: 100%!important;
+    }
+  }
+}
