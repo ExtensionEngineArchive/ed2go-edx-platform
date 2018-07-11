@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
 from jsonfield import JSONField
+from waffle import switch_is_active
 
 from lms.djangoapps.courseware.courses import get_course
 from lms.djangoapps.grades.models import PersistentCourseGrade
@@ -15,6 +16,7 @@ from openedx.core.djangoapps.content.course_structures.models import CourseStruc
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
 
+from ed2go.constants import ENABLED_ED2GO_COMPLETION_REPORTING
 from ed2go.utils import XMLHandler, format_timedelta
 
 LOG = logging.getLogger(__name__)
@@ -116,7 +118,7 @@ class CompletionProfile(models.Model):
 
     def send_report(self):
         """Sends the generated completion report to the Ed2go completion report endpoint."""
-        if settings.ENABLED_ED2GO_COMPLETION_REPORTING:
+        if switch_is_active(ENABLED_ED2GO_COMPLETION_REPORTING):
             report = self.report
             report['APIKey'] = settings.ED2GO_API_KEY
             url = settings.ED2GO_REGISTRATION_SERVICE_URL
