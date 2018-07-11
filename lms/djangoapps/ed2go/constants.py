@@ -25,6 +25,7 @@ ACTION_CHECKSUM_PARAMS = [
 ]
 
 ENABLED_ED2GO_COMPLETION_REPORTING = 'Completion reporting task'
+REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = 'redirect_anonymous_edgo_login'
 
 NEW_REGISTRATION_ACTION = 'NewRegistration'
 UPDATE_REGISTRATION_ACTION = 'UpdateRegistration'
