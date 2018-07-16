@@ -5,8 +5,10 @@ import requests
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 from django.utils.timezone import now
-from jsonfield import JSONField
 from waffle import switch_is_active
 
 from lms.djangoapps.courseware.courses import get_course
@@ -39,8 +41,6 @@ class CompletionProfile(models.Model):
 
     user = models.ForeignKey(User)
     course_key = CourseKeyField(max_length=255, db_index=True)
-    problems = JSONField()
-    videos = JSONField()
 
     # Indicates whether we need to send a report update for this completion profile.
     # Should be set to False whenever course progress or session is updated.
@@ -48,20 +48,6 @@ class CompletionProfile(models.Model):
 
     registration_key = models.CharField(max_length=255, db_index=True, blank=True)
     active = models.BooleanField(default=True)
-
-    def _get_problems_videos(self):
-        """Retrieve all the problems and videos in the current course."""
-        course_structure = CourseStructure.objects.get(course_id=self.course_key).structure
-        problems = {}
-        videos = {}
-
-        for k, v in course_structure['blocks'].items():  # pylint: disable=invalid-name
-            if v['block_type'] == 'video':
-                videos[k] = False
-            if v['block_type'] in self.PROBLEM_TYPES:
-                problems[k] = False
-
-        return problems, videos
 
     def save(self, *args, **kwargs):
         """
@@ -73,10 +59,6 @@ class CompletionProfile(models.Model):
         Creating an instance of this model enrolls the user into the course.
         """
         if self.pk is None:
-            problems, videos = self._get_problems_videos()
-            self.problems = problems
-            self.videos = videos
-
             CourseEnrollment.enroll(self.user, self.course_key)
         super(CompletionProfile, self).save(*args, **kwargs)
 
@@ -92,29 +74,7 @@ class CompletionProfile(models.Model):
         CourseEnrollment.enroll(self.user, self.course_key)
         self.active = True
         self.save()
-        LOG.into('Activated course registration for user %s in course %s.', self.user, self.course_key)
-
-    def mark_progress(self, block_type, usage_key):
-        """
-        Marks a block as completed/attempted.
-
-        Args:
-            block_type (str): type of the block.
-            usage_key (str): usage_key of the block.
-        Raises:
-            KeyError if the passed in usage_key does not exist in the saved problems or videos.
-              Possible cause might be that a new block with a custom type was added
-              subsequently to a course.
-            Exception if the passed in type is not supported.
-        """
-        if block_type in self.PROBLEM_TYPES:
-            self.problems[usage_key] = True
-        elif block_type == 'video':
-            self.videos[usage_key] = True
-        else:
-            raise Exception('Type %s not supported.' % block_type)
-        self.reported = False
-        self.save()
+        LOG.info('Activated course registration for user %s in course %s.', self.user, self.course_key)
 
     def send_report(self):
         """Sends the generated completion report to the Ed2go completion report endpoint."""
@@ -127,14 +87,14 @@ class CompletionProfile(models.Model):
             data = xmlh.request_data_from_dict({'UpdateCompletionReport': report})
             response = requests.post(url, data=data, headers=xmlh.headers)
 
-            error_msg = 'Error sending completion update report: {error}'
+            error_msg = 'Error sending completion update report: %s'
             if response.status_code != 200:
-                LOG.error(error_msg.format(error=response.reason))
+                LOG.error(error_msg, response.reason)
                 return False
 
             response_data = xmlh.completion_update_response_data_from_xml(response.content)
             if response_data['Success'] == 'false':
-                LOG.error(error_msg.format(error=response_data['Code']))
+                LOG.error(error_msg, str(response_data['Code']))
             else:
                 self.reported = True
                 self.save()
@@ -183,16 +143,82 @@ class CompletionProfile(models.Model):
         Returns:
             A float number that represents the percentage of user's progress in the associated course.
         """
-        problems_completed = self.problems.values().count(True) / float(len(self.problems)) if self.problems else None
-        videos_completed = self.videos.values().count(True) / float(len(self.videos)) if self.videos else None
+        units = Unit.objects.filter(
+            subsection__chapter_progress__completion_profile__user=self.user,
+            subsection__chapter_progress__completion_profile__course_key=self.course_key
+        )
+        problems = units.filter(type=Unit.PROBLEM_TYPE)
+        problems_completed = float(problems.filter(done=True).count()) / problems.count()
 
-        if problems_completed is None and videos_completed is None:
+        videos = units.filter(type=Unit.VIDEO_TYPE)
+        videos_completed = float(videos.filter(done=True).count()) / videos.count()
+
+        if not problems and not videos:
             return 0.0
-        elif problems_completed is None:
+        elif not problems:
             return videos_completed
-        elif videos_completed is None:
+        elif not videos:
             return problems_completed
         return 0.5 * problems_completed + 0.5 * videos_completed
+
+    @classmethod
+    def mark_progress(cls, user, course_key, usage_key):
+        """
+        Marks a block as completed/attempted.
+
+        Args:
+            block_type (str): type of the block.
+            usage_key (str): usage_key of the block.
+        Raises:
+            KeyError if the passed in usage_key does not exist in the saved problems or videos.
+              Possible cause might be that a new block with a custom type was added
+              subsequently to a course.
+            Exception if the passed in type is not supported.
+        """
+        profile = cls.objects.get(user=user, course_key=course_key)
+        unit = Unit.objects.get(
+            unit_id=usage_key,
+            subsection__chapter_progress__completion_profile__user=user
+        )
+        unit.done = True
+        unit.save()
+        profile.reported = False
+        profile.save()
+
+
+@receiver(post_save, sender=CompletionProfile, dispatch_uid='populate_chapter_progress')
+def populate_chapter_progress(sender, instance, created, *args, **kwargs):
+    """
+    After a new Completion Profile instance has been created, this will create:
+    * Chapter Progress instances for all the chapters within the course structure
+    * Subsection instances for all the subsections in each of chapters
+    * Unit instances for each unit of the tracked type in each subsection
+    """
+    if created:
+        course_structure = CourseStructure.objects.get(course_id=instance.course_key).ordered_blocks
+        for chapter in course_structure.items()[0][1]['children']:
+            chapter_progress = ChapterProgress.objects.create(
+                chapter_id=chapter,
+                completion_profile=instance
+            )
+            for section in course_structure[chapter]['children']:
+                for subsection in course_structure[section]['children']:
+                    sub_section = SubSection.objects.create(
+                        subsection_id=subsection,
+                        chapter_progress=chapter_progress
+                    )
+                    units = []
+
+                    for unit in course_structure[subsection]['children']:
+                        if course_structure[unit]['block_type'] in Unit.UNIT_TYPES:
+                            units.append(Unit(
+                                unit_id=unit,
+                                subsection=sub_section,
+                                type=course_structure[unit]['block_type']
+                            ))
+                    if units:
+                        # The save method will NOT be called!
+                        Unit.objects.bulk_create(units)
 
 
 class CourseSession(models.Model):
@@ -206,7 +232,7 @@ class CourseSession(models.Model):
     last_activity_at = models.DateTimeField()
     active = models.BooleanField(default=True, db_index=True)
 
-    class Meta:  # pylint: disable=old-style-class
+    class Meta:  # pylint: disable=old-style-class,no-init
         get_latest_by = 'created_at'
 
     def _update_completion_profile(self):
@@ -279,3 +305,65 @@ class CourseSession(models.Model):
         for session in qs:
             total_duration += session.duration
         return total_duration
+
+
+class ChapterProgress(models.Model):
+    """
+    Keeps information about a chapter within a course
+    and the progress of a user in that particular chapter.
+    """
+    completion_profile = models.ForeignKey(CompletionProfile)
+    chapter_id = models.CharField(max_length=255, db_index=True)
+
+    @property
+    def percent_complete(self):
+        """
+        If the chapter is empty the progress is 100%.
+        If not, the progress is percent of completed subsections
+        within the chapter.
+        """
+        total = self.subsection.count()
+        if not total:
+            return 100
+
+        completed = sum([1 if subsection.done else 0 for subsection in self.subsection.all()])
+        return int(round(float(completed) / total * 100))
+
+
+class SubSection(models.Model):
+    """
+    Represents one subsection within a chapter.
+    A subsection is one page of course content. It contains units of various types.
+    """
+    subsection_id = models.CharField(max_length=255, db_index=True)
+    chapter_progress = models.ForeignKey(ChapterProgress, related_name='subsection')
+    viewed = models.BooleanField(default=False)
+
+    @property
+    def done(self):
+        """
+        A subsection is marked as done if all the units that it contains are done.
+        Or if it does not contain any tracked units then it's done one a user views it.
+        """
+        units = self.subsection_units.all()
+        if units:
+            return all((unit.done for unit in units))
+        return self.viewed
+
+
+class Unit(models.Model):
+    """
+    A unit within a course. Keeps information about the done-status of the unit.
+    """
+    VIDEO_TYPE = 'video'
+    PROBLEM_TYPE = 'problem'
+    UNIT_TYPES = [VIDEO_TYPE, PROBLEM_TYPE]
+    UNIT_TYPES_CHOICES = (
+        (VIDEO_TYPE, 'video'),
+        (PROBLEM_TYPE, 'problem')
+    )
+
+    subsection = models.ForeignKey(SubSection, related_name='subsection_units')
+    unit_id = models.CharField(max_length=255, db_index=True)
+    type = models.CharField(max_length=255, choices=UNIT_TYPES_CHOICES)
+    done = models.BooleanField(default=False)

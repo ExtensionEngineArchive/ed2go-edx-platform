@@ -6,7 +6,9 @@
 {% block bodyclass %}view-in-course view-learning-path{% endblock %}
 
 {% block headextra %}
-  {% stylesheet 'style-course' %}
+{% stylesheet 'style-course' %}
+<script type="text/javascript" src="{% static 'js/vendor/flot/jquery.flot.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/progress_page.js' %}"></script>
 {% endblock %}
 
 {% block body %}
@@ -17,17 +19,20 @@
       <div class="profile-wrapper">
 
         <header class="page-header">
-          <h2 class="page-title">Learning Path: {{ course_tree.display_name }}</h2>
+          <h2 class="page-title">Learning Path: {{ display_name }}</h2>
         </header>
 
         <section class="container-fluid">
           <div class="row course-sections">
 
-            {% for section in course_tree.children %}
+            {% for chapter, progress in chapters %}
               <div class="course-section-wrapper col-lg-4 col-md-6 col-xs-12">
                 <div class="course-section">
-                  <h3 class="course-section-header">{{ section.display_name }}</h3>
-                  <a href="{{ section.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                  <h3 class="course-section-header">{{ chapter.display_name }}</h3>
+                  <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="total-progress-bar" data-progress="{{ progress.percent_complete }}"></div>
+                  </div>
+                  <a href="{{ chapter.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
                 </div>
               </div>
             {% endfor %}
