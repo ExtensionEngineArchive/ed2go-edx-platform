@@ -23,4 +23,4 @@ label {
 }
 
 .window-wrap { height: 100%; }
-.content-wrapper { height: calc(100% - 228px); }
+.content-wrapper { min-height: calc(100% - 228px); }
