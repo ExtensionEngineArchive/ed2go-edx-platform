@@ -1,9 +1,12 @@
 import json
 
+import factory
 import mock
+from django.db.models import signals
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from ed2go.constants import COURSE_KEY_TEMPLATE
 from ed2go.models import CompletionProfile
 from ed2go.registration import get_or_create_user_completion_profile, update_registration
 from ed2go.tests.mixins import Ed2goTestMixin
@@ -46,11 +49,11 @@ class RegistrationTests(Ed2goTestMixin, TestCase):
     def assert_completion_profile(self, completion_profile, user):
         self.assertEqual(completion_profile.user, user)
         self.assertEqual(completion_profile.registration_key, self.reg_key)
-        self.assertEqual(str(completion_profile.course_key), 'course-v1:Microsoft+{}+2018_T1'.format(
-            REGISTRATION_DATA['Course']['Code']
+        self.assertEqual(str(completion_profile.course_key), COURSE_KEY_TEMPLATE.format(
+            code=REGISTRATION_DATA['Course']['Code']
         ))
 
-    @mock.patch('ed2go.models.CompletionProfile._get_problems_videos', mock.Mock(return_value=({}, {})))
+    @factory.django.mute_signals(signals.post_save)
     @mock.patch('ed2go.registration.get_registration_data', mock.Mock(return_value=REGISTRATION_DATA))
     def test_get_user_create_profile(self):
         """User returned, new completion profile created."""
@@ -70,7 +73,7 @@ class RegistrationTests(Ed2goTestMixin, TestCase):
             self.assertEqual(user.profile.get_meta()['ReturnURL'] == REGISTRATION_DATA['ReturnURL'], equal)
             self.assertEqual(user.profile.get_meta()['StudentKey'] == REGISTRATION_DATA['Student']['StudentKey'], equal)
 
-    @mock.patch('ed2go.models.CompletionProfile._get_problems_videos', mock.Mock(return_value=({}, {})))
+    @factory.django.mute_signals(signals.post_save)
     @mock.patch('ed2go.registration.get_registration_data', mock.Mock(return_value=REGISTRATION_DATA))
     def test_create_user_and_profile(self):
         """New user and completion profile created."""

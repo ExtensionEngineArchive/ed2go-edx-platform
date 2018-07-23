@@ -8,4 +8,5 @@ urlpatterns = patterns(
     '',
     url(r'action/$', views.ActionView.as_view(), name='action'),
     url(r'course-session/$', views.CourseSessionView.as_view(), name='course-session'),
+    url(r'content-viewed/$', views.ContentViewedView.as_view(), name='content-viewed')
 )

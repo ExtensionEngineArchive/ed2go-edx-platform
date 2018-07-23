@@ -17,6 +17,7 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from openedx.features.course_experience.utils import get_course_outline_block_tree
 
 from ed2go import constants
+from ed2go.models import CompletionProfile
 from ed2go.registration import get_or_create_user_completion_profile
 from ed2go.utils import request_valid
 
@@ -34,10 +35,12 @@ class LearningPathView(View):
         course_key = CourseKey.from_string(course_id)
         course = get_course_by_id(course_key, depth=2)
         course_block_tree = get_course_outline_block_tree(request, course_id)
+        completion_profile = CompletionProfile.objects.get(user=request.user, course_key=course_key)
 
         context = {
             'course': course,
-            'course_tree': course_block_tree,
+            'display_name': course_block_tree['display_name'],
+            'chapters': zip(course_block_tree['children'], completion_profile.chapterprogress_set.all()),
             'LANGUAGE_CODE': request.LANGUAGE_CODE,
             'learning_path_class': 'active',
             'platform_name': configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),

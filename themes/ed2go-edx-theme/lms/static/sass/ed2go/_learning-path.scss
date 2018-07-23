@@ -58,4 +58,43 @@ body.view-learning-path.view-in-course {
     .page-header {
         border: none;
     }
+
+    .progress-bar-wrapper {
+        @include span-columns(12);
+        padding: 13px 0px;
+
+        .progress-bar {
+          margin: 0 auto;
+          border: 1px solid $ed-light-grey;
+          border-radius: 10px;
+          width: 300px;
+          height: 20px;
+          background-color: transparent;
+
+          @include media($tablet-large) {
+            width: 100%;
+            margin-left: 0;
+          }
+
+          .legend {
+            position: absolute;
+            left: 50%;
+            top: -8px;
+
+            & > div { display: none; }
+
+            table {
+              position: relative!important;
+              left: -50%!important;
+
+              .legendColorBox { display: none; }
+
+              .legendLabel {
+                color: $ed-dark-grey;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
 }

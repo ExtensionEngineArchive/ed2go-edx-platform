@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ed2go import constants
-from ed2go.models import CompletionProfile, CourseSession
+from ed2go.models import CompletionProfile, CourseSession, SubSection
 from ed2go.registration import get_or_create_user_completion_profile, update_registration
 from ed2go.utils import request_valid
 
@@ -65,4 +65,28 @@ class CourseSessionView(APIView):
 
         session, _ = CourseSession.objects.get_or_create(user=user, course_key=course_key, active=True)
         session.update()
+        return Response(status=204)
+
+
+class ContentViewedView(APIView):
+    def post(self, request):
+        """
+        POST requests handler.
+        Sets a subsection as viewed.
+        usage_id = request.POST['usage_id']
+
+        Args:
+            request (WSGIRequest): request that should contain information
+            about the subsection usage ID.
+        Returns:
+            Returns a 204 status code response.
+        """
+        usage_id = request.POST['usage_id']
+        sub_section = SubSection.objects.get(
+            subsection_id=usage_id,
+            chapter_progress__completion_profile__user=request.user
+        )
+        if not sub_section.viewed:
+            sub_section.viewed = True
+            sub_section.save()
         return Response(status=204)
