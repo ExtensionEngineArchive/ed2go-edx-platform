@@ -2,7 +2,9 @@ import urlparse
 import uuid
 from datetime import timedelta
 
+import factory
 import mock
+from django.db.models import signals
 from django.test import Client
 from django.utils import timezone
 from factory.fuzzy import FuzzyText
@@ -35,7 +37,7 @@ class Ed2goTestMixin(ModuleStoreTestCase):
         )
         return CourseKey.from_string(course_str)
 
-    @mock.patch('ed2go.models.CompletionProfile._get_problems_videos', mock.Mock(return_value=({}, {})))
+    @factory.django.mute_signals(signals.post_save)
     def create_completion_profile(self, user=None, course_key=None, reg_key=None):
         """Create a new CompletionProfile instance with empty problems and videos attributes.
 
