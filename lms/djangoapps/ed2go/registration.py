@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from opaque_keys.edx.keys import CourseKey
 from student.models import UserProfile
 
+from ed2go.constants import COURSE_KEY_TEMPLATE
 from ed2go.utils import generate_username, get_registration_data
 from ed2go.models import CompletionProfile
 
@@ -30,8 +31,8 @@ def get_or_create_user_completion_profile(registration_key):
         student_data = registration_data['Student']
 
         # The reponse from ed2go contains only the course code
-        course_code = 'course-v1:Microsoft+' + registration_data['Course']['Code'] + '+2018_T1'
-        course_key = CourseKey.from_string(course_code)
+        course_key_string = COURSE_KEY_TEMPLATE.format(code=registration_data['Course']['Code'])
+        course_key = CourseKey.from_string(course_key_string)
 
         try:
             user = User.objects.get(email=student_data['Email'])

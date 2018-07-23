@@ -30,3 +30,5 @@ REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = 'redirect_anonymous_edgo_login'
 NEW_REGISTRATION_ACTION = 'NewRegistration'
 UPDATE_REGISTRATION_ACTION = 'UpdateRegistration'
 CANCEL_REGISTRATION_ACTION = 'CancelRegistration'
+
+COURSE_KEY_TEMPLATE = 'course-v1:Microsoft+{code}+2018_T2'
