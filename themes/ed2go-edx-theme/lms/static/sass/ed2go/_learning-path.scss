@@ -4,7 +4,35 @@ body.view-learning-path.view-in-course {
     }
 }
 
+.overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .learning-path-main {
+
+    .course-forum-statistics {
+        padding: 10px 5px 20px 5px;
+        border: 1px solid #dcdcdc;
+        border-radius: 10px;
+        background-color: #fff;
+        margin-left: -10px;
+        margin-right: -10px;
+
+        .forum-stat-header {
+            font-size: 14px;
+        }
+
+        .course-forum-left-border {
+            border-left: 1px solid $lightest-grey;
+        }
+
+        .forum-stat-value {
+            color: $ed-blue-one;
+        }
+    }
+
     .course-sections {
         background-color: $lightest-grey;
 
