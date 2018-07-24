@@ -13,23 +13,25 @@ body.view-learning-path.view-in-course {
 .learning-path-main {
 
     .course-forum-statistics {
-        padding: 10px 5px 20px 5px;
-        border: 1px solid #dcdcdc;
+        padding: 10px 5px;
+        border: 1px solid $ed-light-grey;
         border-radius: 10px;
         background-color: #fff;
-        margin-left: -10px;
-        margin-right: -10px;
+        margin: 0px -10px 30px -10px;
 
         .forum-stat-header {
-            font-size: 14px;
+            font-size: 1rem;
         }
 
         .course-forum-left-border {
-            border-left: 1px solid $lightest-grey;
+            height: 50px;
+            border-left: 1px solid $ed-light-grey;
         }
 
         .forum-stat-value {
-            color: $ed-blue-one;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: $ed-grey-one;
         }
     }
 
