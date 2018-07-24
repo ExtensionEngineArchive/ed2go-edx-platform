@@ -4,7 +4,7 @@ from datetime import timedelta
 import requests
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -187,6 +187,7 @@ class CompletionProfile(models.Model):
 
 
 @receiver(post_save, sender=CompletionProfile, dispatch_uid='populate_chapter_progress')
+@transaction.atomic
 def populate_chapter_progress(sender, instance, created, *args, **kwargs):
     """
     After a new Completion Profile instance has been created, this will create:
