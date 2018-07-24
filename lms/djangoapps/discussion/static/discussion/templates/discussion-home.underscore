@@ -1,9 +1,12 @@
 <div class="discussion-article view-discussion-home">
   <section class="home-header">
+  <div class="discussion-title-wrapper">
     <span class="label"><%- gettext("Discussion Home") %></span>
     <% if (window.courseName) { %>
       <h2 class="home-title"><%- window.courseName %></h2>
     <% } %>
+  </div>
+  <button class="btn btn-small new-post-btn">Add a Post</button>
   </section>
 
   <% if (window.ENABLE_DISCUSSION_HOME_PANEL) { %>
@@ -44,19 +47,20 @@
           <span class="row-description"><%- gettext("Follow or unfollow posts") %></span>
         </td>
       </tr>
-      <tr class="helpgrid-row helpgrid-row-notification">
-        <th scope="row" class="row-title"><%- gettext('Receive updates') %></td>
-        <td class="row-item-full" colspan="3">
-          <label for="email-setting-checkbox">
-            <span class="sr"><%- gettext("Toggle Notifications Setting") %></span>
-            <span class="notification-checkbox">
-              <input type="checkbox" id="email-setting-checkbox" class="email-setting" name="email-notification"/>
-              <span class="icon fa fa-envelope" aria-hidden="true"></span>
-            </span>
-          </label>
-          <span class="row-description"><%- gettext("Check this box to receive an email digest once a day notifying you about new, unread activity from posts you are following.") %></span>
-        </td>
-      </tr>
     </table>
   <% } %>
 </div>
+<script>
+$(document).ready(function() {
+    var $addPostBtn = $('.view-discussion-home .new-post-btn');
+    var $topAddPostBtn = $('.form-actions .new-post-btn');
+
+    if ($topAddPostBtn) {
+        $addPostBtn.click(function() {
+            $topAddPostBtn.trigger('click');
+        });
+    } else {
+        $addPostBtn.addClass('hidden');
+    }
+});
+</script>
