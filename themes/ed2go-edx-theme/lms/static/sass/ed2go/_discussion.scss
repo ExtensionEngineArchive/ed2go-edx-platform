@@ -21,6 +21,18 @@ aside.forum-nav {
   }
 }
 
+section.home-header {
+  .discussion-title-wrapper {
+    display: inline-block;
+    width: calc(100% - 100px);
+    vertical-align: middle;
+  }
+
+  .new-post-btn {
+    display: inline-block;
+  }
+}
+
 section.discussion {
   .forum-search {
     .field-input {
@@ -44,4 +56,19 @@ section.discussion {
     border-left: 5px solid #dcdcdc;
     padding-left: 10px;
   }
+}
+
+.post-title-wrapper {
+  .post-title {
+    display: inline-block;
+    width: calc(100% - 100px);
+  }
+
+  .new-post-btn {
+    display: inline-block;
+  }
+}
+
+.hidden {
+  display: none!important;
 }

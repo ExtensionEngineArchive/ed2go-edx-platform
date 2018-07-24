@@ -17,7 +17,10 @@
             </div>
         <% } %>
         <div class="post-header-content">
-            <h<%- startHeader %> class="post-title"><%- title %></h<%- startHeader%>>
+            <div class="post-title-wrapper">
+                <h<%- startHeader %> class="post-title"><%- title %></h<%- startHeader%>>
+                <button class="btn btn-small new-post-btn">Add a Post</button>
+            </div>
             <p class="posted-details">
             <%
             var timeAgoHtml = interpolate(
@@ -84,3 +87,18 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    var $addPostBtn = $('.post-title-wrapper .new-post-btn');
+    var $topAddPostBtn = $('.form-actions .new-post-btn');
+
+    if ($topAddPostBtn) {
+        $addPostBtn.click(function() {
+            $topAddPostBtn.trigger('click');
+        });
+    } else {
+        $addPostBtn.addClass('hidden');
+    }
+});
+</script>

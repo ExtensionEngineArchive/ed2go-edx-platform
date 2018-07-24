@@ -1,9 +1,12 @@
 <div class="discussion-article view-discussion-home">
   <section class="home-header">
+  <div class="discussion-title-wrapper">
     <span class="label"><%- gettext("Discussion Home") %></span>
     <% if (window.courseName) { %>
       <h2 class="home-title"><%- window.courseName %></h2>
     <% } %>
+  </div>
+  <button class="btn btn-small new-post-btn">Add a Post</button>
   </section>
 
   <% if (window.ENABLE_DISCUSSION_HOME_PANEL) { %>
@@ -47,3 +50,17 @@
     </table>
   <% } %>
 </div>
+<script>
+$(document).ready(function() {
+    var $addPostBtn = $('.view-discussion-home .new-post-btn');
+    var $topAddPostBtn = $('.form-actions .new-post-btn');
+
+    if ($topAddPostBtn) {
+        $addPostBtn.click(function() {
+            $topAddPostBtn.trigger('click');
+        });
+    } else {
+        $addPostBtn.addClass('hidden');
+    }
+});
+</script>
