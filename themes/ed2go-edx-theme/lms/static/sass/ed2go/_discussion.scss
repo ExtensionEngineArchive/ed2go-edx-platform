@@ -1,3 +1,26 @@
+aside.forum-nav {
+  border: none;
+
+  .go-all-topics {
+    float: left;
+    margin-right: 20px;
+    height: 20px;
+    line-height: 20px;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .forum-nav-browse-menu-wrapper {
+    background: #fff;
+  }
+
+  .forum-nav-refine-bar {
+    background-color: #fff;
+  }
+}
+
 section.discussion {
   .forum-search {
     .field-input {

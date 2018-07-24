@@ -15,12 +15,5 @@ h2 {
    }
 }
 
-label {
-  color: $black !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  font: normal 700 14px Open sans !important;
-}
-
 .window-wrap { height: 100%; }
 .content-wrapper { min-height: calc(100% - 228px); }
