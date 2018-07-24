@@ -194,32 +194,44 @@ def populate_chapter_progress(sender, instance, created, *args, **kwargs):
     * Chapter Progress instances for all the chapters within the course structure
     * Subsection instances for all the subsections in each of chapters
     * Unit instances for each unit of the tracked type in each subsection
+
+    bulk_create() is used to drastically cut down the number of database queries (~90 > ~20)
     """
     if created:
+        chapters = []
+        chapter_ids = []
+        subsections = []
+        subsection_ids = []
+        units = []
+
         course_structure = CourseStructure.objects.get(course_id=instance.course_key).ordered_blocks
         for chapter in course_structure.items()[0][1]['children']:
-            chapter_progress = ChapterProgress.objects.create(
+            chapters.append(ChapterProgress(
                 chapter_id=chapter,
                 completion_profile=instance
-            )
-            for section in course_structure[chapter]['children']:
+            ))
+            chapter_ids.append(chapter)
+        ChapterProgress.objects.bulk_create(chapters)
+
+        for chapter_progress in ChapterProgress.objects.filter(chapter_id__in=chapter_ids):
+            for section in course_structure[chapter_progress.chapter_id]['children']:
                 for subsection in course_structure[section]['children']:
-                    sub_section = SubSection.objects.create(
+                    subsections.append(SubSection(
                         subsection_id=subsection,
                         chapter_progress=chapter_progress
-                    )
-                    units = []
+                    ))
+                    subsection_ids.append(subsection)
+        SubSection.objects.bulk_create(subsections)
 
-                    for unit in course_structure[subsection]['children']:
-                        if course_structure[unit]['block_type'] in Unit.UNIT_TYPES:
-                            units.append(Unit(
-                                unit_id=unit,
-                                subsection=sub_section,
-                                type=course_structure[unit]['block_type']
-                            ))
-                    if units:
-                        # The save method will NOT be called!
-                        Unit.objects.bulk_create(units)
+        for subsection in SubSection.objects.filter(subsection_id__in=subsection_ids):
+            for unit in course_structure[subsection.subsection_id]['children']:
+                if course_structure[unit]['block_type'] in Unit.UNIT_TYPES:
+                    units.append(Unit(
+                        unit_id=unit,
+                        subsection=subsection,
+                        type=course_structure[unit]['block_type']
+                    ))
+        Unit.objects.bulk_create(units)
 
 
 class CourseSession(models.Model):
