@@ -31,7 +31,9 @@ class Command(BaseCommand):
         )
 
         for course_key in course_keys:
-            users_with_profiles = CompletionProfile.objects.filter(course_key=course_key).values_list('user_id', flat=True)
+            users_with_profiles = CompletionProfile.objects.filter(
+                course_key=course_key
+            ).values_list('user_id', flat=True)
             users_without_profiles = User.objects.exclude(id__in=users_with_profiles)
 
             for user in users_without_profiles:
