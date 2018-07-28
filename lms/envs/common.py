@@ -3219,12 +3219,6 @@ COURSES_API_CACHE_TIMEOUT = 3600  # Value is in seconds
 COURSEGRAPH_JOB_QUEUE = LOW_PRIORITY_QUEUE
 
 
-########################## Ed2go overrides ##########################
-STUDENT_LOGIN_URL = 'https://www.ed2go.com/student-login/'
-
-LOGOUT_REDIRECT_URL = 'https://www.ed2go.com/logout'
-
+########################## Ed2go settings ##########################
 ED2GO_SESSION_INACTIVITY_THRESHOLD = 2 * 60 * 60  # in seconds
-ED2GO_REGISTRATION_SERVICE_URL = 'https://api.ed2go.com/sandbox/vendor/1.2/RegistrationService.asmx'
-ED2GO_SUPPORT_URL = 'https://www.ed2go.com/lti/link/support'
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
