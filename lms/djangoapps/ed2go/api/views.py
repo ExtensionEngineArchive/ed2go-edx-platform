@@ -1,10 +1,10 @@
 from django.contrib.auth.models import User
-from opaque_keys.edx.keys import CourseKey
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ed2go import constants
-from ed2go.models import CompletionProfile, CourseSession, SubSection
+from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import get_or_create_user_completion_profile, update_registration
 from ed2go.utils import request_valid
 
@@ -82,11 +82,6 @@ class ContentViewedView(APIView):
             Returns a 204 status code response.
         """
         usage_id = request.POST['usage_id']
-        sub_section = SubSection.objects.get(
-            subsection_id=usage_id,
-            chapter_progress__completion_profile__user=request.user
-        )
-        if not sub_section.viewed:
-            sub_section.viewed = True
-            sub_section.save()
-        return Response(status=204)
+        course_key = UsageKey.from_string(usage_id).course_key
+        marked = ChapterProgress.mark_subsection_viewed(request.user, course_key, usage_id)
+        return Response(status=204 if marked else 404)

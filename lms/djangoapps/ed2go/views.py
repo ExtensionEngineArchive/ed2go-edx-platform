@@ -41,7 +41,7 @@ class LearningPathView(View):
         context = {
             'course': course,
             'display_name': course_block_tree['display_name'],
-            'chapters': zip(course_block_tree['children'], completion_profile.chapterprogress_set.all()),
+            'chapters': zip(course_block_tree['children'], completion_profile.chapterprogress.all()),
             'LANGUAGE_CODE': request.LANGUAGE_CODE,
             'learning_path_class': 'active',
             'platform_name': configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
