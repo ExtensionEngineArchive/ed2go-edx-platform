@@ -1013,3 +1013,12 @@ ED2GO_URL = ENV_TOKENS.get('ED2GO_URL', 'https://www.ed2go.com')
 AZURE_ACCOUNT_NAME = AUTH_TOKENS.get('AZURE_ACCOUNT_NAME')
 AZURE_ACCOUNT_KEY = AUTH_TOKENS.get('AZURE_ACCOUNT_KEY')
 AZURE_CONTAINER = AUTH_TOKENS.get('AZURE_CONTAINER')
+
+STUDENT_LOGIN_URL = ENV_TOKENS.get('STUDENT_LOGIN_URL', 'https://www.ed2go.com/student-login/')
+LOGOUT_REDIRECT_URL = ENV_TOKENS.get('LOGOUT_REDIRECT_URL', 'https://www.ed2go.com/logout')
+
+ED2GO_REGISTRATION_SERVICE_URL = ENV_TOKENS.get(
+    'ED2GO_REGISTRATION_SERVICE_URL',
+    'https://api.ed2go.com/sandbox/vendor/1.2/RegistrationService.asmx'
+)
+ED2GO_SUPPORT_URL = ENV_TOKENS.get('ED2GO_SUPPORT_URL', 'https://www.ed2go.com/lti/link/support')

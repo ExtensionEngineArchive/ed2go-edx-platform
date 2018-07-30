@@ -271,10 +271,24 @@
                 this.toggleArrows();
                 this.hookUpContentStateChangeEvent();
                 this.updatePageTitle();
+                this.markViewed();
                 sequenceLinks = this.content_container.find('a.seqnav');
                 sequenceLinks.click(this.goto);
 
                 this.sr_container.focus();
+            }
+        };
+
+        Sequence.prototype.markViewed = function() {
+            var usageId = $('.xblock-student_view-vertical.xblock-initialized').data('usage-id');
+            if (usageId) {
+                $.ajax({
+                    method: 'POST',
+                    url: '/ed2go/api/content-viewed/',
+                    data: {
+                        usage_id: usageId
+                    }
+                });
             }
         };
 

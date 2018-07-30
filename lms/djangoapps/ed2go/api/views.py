@@ -1,10 +1,10 @@
 from django.contrib.auth.models import User
-from opaque_keys.edx.keys import CourseKey
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ed2go import constants
-from ed2go.models import CompletionProfile, CourseSession
+from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import get_or_create_user_completion_profile, update_registration
 from ed2go.utils import request_valid
 
@@ -66,3 +66,22 @@ class CourseSessionView(APIView):
         session, _ = CourseSession.objects.get_or_create(user=user, course_key=course_key, active=True)
         session.update()
         return Response(status=204)
+
+
+class ContentViewedView(APIView):
+    def post(self, request):
+        """
+        POST requests handler.
+        Sets a subsection as viewed.
+        usage_id = request.POST['usage_id']
+
+        Args:
+            request (WSGIRequest): request that should contain information
+            about the subsection usage ID.
+        Returns:
+            Returns a 204 status code response.
+        """
+        usage_id = request.POST['usage_id']
+        course_key = UsageKey.from_string(usage_id).course_key
+        marked = ChapterProgress.mark_subsection_viewed(request.user, course_key, usage_id)
+        return Response(status=204 if marked else 404)

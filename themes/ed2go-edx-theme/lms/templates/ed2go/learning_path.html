@@ -6,7 +6,9 @@
 {% block bodyclass %}view-in-course view-learning-path{% endblock %}
 
 {% block headextra %}
-  {% stylesheet 'style-course' %}
+{% stylesheet 'style-course' %}
+<script type="text/javascript" src="{% static 'js/vendor/flot/jquery.flot.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/progress_page.js' %}"></script>
 {% endblock %}
 
 {% block body %}
@@ -17,17 +19,47 @@
       <div class="profile-wrapper">
 
         <header class="page-header">
-          <h2 class="page-title">Learning Path: {{ course_tree.display_name }}</h2>
+          <h2 class="page-title">Learning Path: {{ display_name }}</h2>
         </header>
 
         <section class="container-fluid">
+          <div class="row course-forum-statistics">
+              <div class="forum-stat col-lg col-md-6 col-xs-12">
+                <h3 class="forum-stat-header">Posts in the past 30 days:</h3>
+                <span class="forum-stat-value">{{ discussions_stats.recent_posts }}</span>
+              </div>
+              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
+                <h3 class="forum-stat-header">All posts:</h3>
+                <span class="forum-stat-value">{{ discussions_stats.all_posts }}</span>
+              </div>
+              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
+                <h3 class="forum-stat-header">My discussions:</h3>
+                <span class="forum-stat-value">{{ discussions_stats.user_threads_count }}</span>
+              </div>
+              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
+                <h3 class="forum-stat-header">My posts:</h3>
+                <span class="forum-stat-value">{{ discussions_stats.user_comments_count }}</span>
+              </div>
+              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border overflow-ellipsis">
+                <h3 class="forum-stat-header">Most recent post:</h3>
+                {% if  discussions_stats.latest_post %}
+                  <a href="{{ discussions_stats.latest_post.courseware_url }}" class="">{{ discussions_stats.latest_post.title }}</a>
+                {% else %}
+                  <span>No posts</span>
+                {% endif %}
+              </div>
+          </div>
+
           <div class="row course-sections">
 
-            {% for section in course_tree.children %}
+            {% for chapter, progress in chapters %}
               <div class="course-section-wrapper col-lg-4 col-md-6 col-xs-12">
                 <div class="course-section">
-                  <h3 class="course-section-header">{{ section.display_name }}</h3>
-                  <a href="{{ section.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                  <h3 class="course-section-header">{{ chapter.display_name }}</h3>
+                  <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="total-progress-bar" data-progress="{{ progress.progress }}"></div>
+                  </div>
+                  <a href="{{ chapter.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
                 </div>
               </div>
             {% endfor %}

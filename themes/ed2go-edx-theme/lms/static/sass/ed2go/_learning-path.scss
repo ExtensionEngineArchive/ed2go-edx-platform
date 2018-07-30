@@ -4,7 +4,37 @@ body.view-learning-path.view-in-course {
     }
 }
 
+.overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .learning-path-main {
+
+    .course-forum-statistics {
+        padding: 10px 5px;
+        border: 1px solid $ed-light-grey;
+        border-radius: 10px;
+        background-color: #fff;
+        margin: 0px -10px 30px -10px;
+
+        .forum-stat-header {
+            font-size: 1rem;
+        }
+
+        .course-forum-left-border {
+            height: 50px;
+            border-left: 1px solid $ed-light-grey;
+        }
+
+        .forum-stat-value {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: $ed-grey-one;
+        }
+    }
+
     .course-sections {
         background-color: $lightest-grey;
 
@@ -58,4 +88,43 @@ body.view-learning-path.view-in-course {
     .page-header {
         border: none;
     }
+
+    .progress-bar-wrapper {
+        @include span-columns(12);
+        padding: 13px 0px;
+
+        .progress-bar {
+          margin: 0 auto;
+          border: 1px solid $ed-light-grey;
+          border-radius: 10px;
+          width: 300px;
+          height: 20px;
+          background-color: transparent;
+
+          @include media($tablet-large) {
+            width: 100%;
+            margin-left: 0;
+          }
+
+          .legend {
+            position: absolute;
+            left: 50%;
+            top: -8px;
+
+            & > div { display: none; }
+
+            table {
+              position: relative!important;
+              left: -50%!important;
+
+              .legendColorBox { display: none; }
+
+              .legendLabel {
+                color: $ed-dark-grey;
+                font-weight: 600;
+              }
+            }
+          }
+        }
+      }
 }

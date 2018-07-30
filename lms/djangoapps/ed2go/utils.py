@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 import urllib
 from collections import defaultdict
@@ -14,6 +15,8 @@ from django.utils.timezone import now
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 
 from ed2go import constants
+
+LOG = logging.getLogger(__name__)
 
 
 def request_expired(request_data):
@@ -85,8 +88,10 @@ def request_valid(request_data, request_type):
         bool: True if the received request_data is valid, False otherwise.
     """
     if request_expired(request_data):
+        LOG.info('Expired action request. Type: %s', request_type)
         return (False, 'Request expired.')
     if not checksum_valid(request_data, request_type):
+        LOG.info('Invalid action request checksum. Type: %s', request_type)
         return (False, 'Checksum invalid.')
     return (True, '')
 

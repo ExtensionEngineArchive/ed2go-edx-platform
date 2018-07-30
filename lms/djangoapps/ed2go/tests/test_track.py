@@ -1,5 +1,7 @@
 import ddt
+import factory
 import mock
+from django.db.models import signals
 from django.test import TestCase
 
 from ed2go.tests.mixins import Ed2goTestMixin
@@ -23,7 +25,7 @@ class TrackTests(Ed2goTestMixin, TestCase):
         ('stop_video', VIDEO_DATA, VIDEO_PAGE)
     )
     @ddt.unpack
-    @mock.patch('ed2go.models.CompletionProfile._get_problems_videos', mock.Mock(return_value=({}, {})))
+    @factory.django.mute_signals(signals.post_save)
     @mock.patch('ed2go.models.CompletionProfile.mark_progress')
     def test_track_user_event(self, event_name, data, page, mocked_fn):
         """Progress marked."""
