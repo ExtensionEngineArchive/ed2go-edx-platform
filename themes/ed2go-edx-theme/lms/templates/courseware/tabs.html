@@ -19,22 +19,23 @@ def url_class(is_active):
     tab_is_active = tab.tab_id in (active_page, default_tab)
     tab_class = url_class(tab_is_active)
   %>
-  <li class="tab">
-  <a href="${tab.link_func(course, reverse)}" class="${tab_class}">
-  ${_('Assignments') if tab.name == 'Progress' else _(tab.name)}
-  % if tab_is_active:
-      <span class="sr">, current location</span>
-  %endif
-  % if tab_image:
-      ## Translators: 'needs attention' is an alternative string for the
-      ## notification image that indicates the tab "needs attention".
-      <img src="${tab_image}" alt="${_('needs attention')}" />
-  %endif
-  </a>
-  </li>
   % if tab.name == 'Course':
-  <li class="tab">
-    <a href="${reverse('learning_path', args=[course.id])}" class="learning-path-tab ${learning_path_class if learning_path_class else ''}">Learning Path</a>
-  </li>
-  % endif
+    <li class="tab">
+      <a href="${reverse('learning_path', args=[course.id])}" class="learning-path-tab ${learning_path_class if learning_path_class else ''}">Learning Path</a>
+    </li>
+  % else:
+    <li class="tab">
+      <a href="${tab.link_func(course, reverse)}" class="${tab_class}">
+      ${_('Assignments') if tab.name == 'Progress' else _(tab.name)}
+      % if tab_is_active:
+          <span class="sr">, current location</span>
+      %endif
+      % if tab_image:
+          ## Translators: 'needs attention' is an alternative string for the
+          ## notification image that indicates the tab "needs attention".
+          <img src="${tab_image}" alt="${_('needs attention')}" />
+      %endif
+      </a>
+    </li>
+  %endif
 % endfor
