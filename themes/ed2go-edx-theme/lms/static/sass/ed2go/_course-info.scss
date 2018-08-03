@@ -16,11 +16,8 @@
     p {
       font: normal 300 16px/22px Open Sans;
     }
-
   }
-}
 
-.course-info {
   header.course-profile {
     height: auto;
     padding: 100px;
@@ -28,6 +25,16 @@
     .intro-inner-wrapper {
       border-radius: 10px;
       box-shadow: None;
+
+      &>div.table {
+        margin-bottom: unset;
+      }
+
+      .intro>.heading-group {
+        margin-bottom: unset;
+        padding-bottom: unset;
+        border-bottom: unset;
+      }
     }
   }
 }

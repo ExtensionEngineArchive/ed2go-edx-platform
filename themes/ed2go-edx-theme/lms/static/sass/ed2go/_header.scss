@@ -5,15 +5,22 @@
 }
 
 .header-global {
-  min-height: 60px;
+  height: 60px!important;
 
   @include media($tablet-large) {
     height: auto;
   }
 
   .wrapper-header {
+    padding: 2px 0 0 0;
     @include media($tablet-large) {
       height: auto;
+    }
+  }
+
+  &.slim {
+    .wrapper-header {
+      padding-top: 0!important;
     }
   }
 
@@ -38,6 +45,7 @@
       }
     }
   }
+
   .menu-title {
     color: $ed-lighter-grey !important;
   }
