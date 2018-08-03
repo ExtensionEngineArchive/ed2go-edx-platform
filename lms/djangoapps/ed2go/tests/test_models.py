@@ -1,7 +1,11 @@
 from datetime import timedelta
 
+import factory
 import mock
+from django.db.models import signals
 from django.test import TestCase
+
+from student.models import CourseEnrollment
 
 from ed2go.models import CompletionProfile, CourseSession
 from ed2go.tests.mixins import Ed2goTestMixin
@@ -134,3 +138,54 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
 
         total_time = CourseSession.total_time(user=self.user, course_key=self.course_key)
         self.assertEqual(total_time, first_session_duration + second_session_duration)
+
+
+class CompletionProfileTests(Ed2goTestMixin, TestCase):
+
+    def setUp(self):
+        self.user = self.create_user()
+        self.course = self.create_course()
+        self.course_key = self.course.id
+
+    def _create_profile(self):
+        return self.create_completion_profile(user=self.user, course_key=str(self.course_key))
+
+    @factory.django.mute_signals(signals.post_save)
+    def test_save(self):
+        """A new CompletionProfile instance is created and user enrolled."""
+        self.assertFalse(
+            CourseEnrollment.objects.filter(user=self.user, course_id=self.course_key).exists()
+        )
+        self._create_profile()
+        enrollment = CourseEnrollment.objects.get(user=self.user, course_id=self.course_key)
+        self.assertTrue(enrollment.is_active)
+
+    def test_profile_activation(self):
+        """CompletionProfile and enrollment are active."""
+        completion_profile = self._create_profile()
+        completion_profile.active = False
+        completion_profile.save()
+
+        enrollment = CourseEnrollment.objects.get(user=self.user, course_id=self.course_key)
+        enrollment.update_enrollment(is_active=False)
+
+        enrollment.refresh_from_db()
+        self.assertFalse(completion_profile.active)
+        self.assertFalse(enrollment.is_active)
+
+        completion_profile.activate()
+        enrollment.refresh_from_db()
+        self.assertTrue(completion_profile.active)
+        self.assertTrue(enrollment.is_active)
+
+    def test_profile_deactivation(self):
+        """CompletionProfile and enrollment are not active."""
+        completion_profile = self._create_profile()
+        enrollment = CourseEnrollment.objects.get(user=self.user, course_id=self.course_key)
+        self.assertTrue(completion_profile.active)
+        self.assertTrue(enrollment.is_active)
+
+        completion_profile.deactivate()
+        enrollment.refresh_from_db()
+        self.assertFalse(completion_profile.active)
+        self.assertFalse(enrollment.is_active)

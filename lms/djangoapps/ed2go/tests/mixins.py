@@ -3,21 +3,20 @@ import uuid
 from datetime import timedelta
 
 import factory
-import mock
 from django.db.models import signals
 from django.test import Client
 from django.utils import timezone
-from factory.fuzzy import FuzzyText
 from freezegun import freeze_time
 from opaque_keys.edx.keys import CourseKey
 
 from student.tests.factories import UserFactory
-from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
+from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
+from xmodule.modulestore.tests.factories import CourseFactory
 
 from ed2go.models import CompletionProfile, CourseSession
 
 
-class Ed2goTestMixin(ModuleStoreTestCase):
+class Ed2goTestMixin(SharedModuleStoreTestCase):
     username = 'tester'
     password = 'password'
     email = 'tester@example.com'
@@ -33,7 +32,7 @@ class Ed2goTestMixin(ModuleStoreTestCase):
         course_str = 'course-v1:{org}+{course}+{run}'.format(
             org=org,
             course=course,
-            run=run if run else FuzzyText(length=5).fuzz()
+            run=run if run else factory.fuzzy.FuzzyText(length=5).fuzz()
         )
         return CourseKey.from_string(course_str)
 
@@ -101,6 +100,9 @@ class Ed2goTestMixin(ModuleStoreTestCase):
         tdelta = timezone.now() + timedelta(minutes=minutes)
         self.freeze_time(tdelta)
         return tdelta
+
+    def create_course(self):
+        return CourseFactory.create()
 
 
 class SiteMixin(object):
