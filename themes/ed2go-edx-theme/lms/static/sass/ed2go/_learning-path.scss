@@ -86,6 +86,10 @@ body.view-learning-path.view-in-course {
                 border: 1px solid $ed-light-grey;
                 border-top: none;
                 border-radius: 0 0 10px 10px;
+
+                li {
+                    margin-bottom: 5px;
+                }
             }
         }
     }
