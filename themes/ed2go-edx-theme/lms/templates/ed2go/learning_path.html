@@ -59,7 +59,12 @@
                   <div class="progress-bar-wrapper">
                     <div class="progress-bar" id="total-progress-bar" data-progress="{{ progress.progress }}"></div>
                   </div>
-                  <a href="{{ chapter.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                  <button class="btn btn-primary units-btn">Units</button>
+                  <ul class="course-section-links">
+                    {% for child in chapter.children %}
+                    <li><a href="{{ child.lms_web_url }}">{{ child.display_name }}</a></li>
+                    {% endfor %}
+                  </ul>
                 </div>
               </div>
             {% endfor %}
@@ -70,4 +75,24 @@
       </div>
     </div>
   </main>
+
+  <script>
+  $(document).ready(function() {
+    $('button.units-btn').click(function() {
+      var duration = 200;
+      var $list = $(this).parent().find('ul.course-section-links');
+
+      if ($list.hasClass('open')) {
+        $list.slideUp(duration);
+        $list.removeClass('open');
+      } else {
+        var $openList = $('ul.course-section-links.open');
+        $openList.slideUp(duration);
+        $openList.removeClass('open');
+        $list.slideDown(duration);
+        $list.addClass('open');
+      }
+    });
+  });
+  </script>
 {% endblock %}
