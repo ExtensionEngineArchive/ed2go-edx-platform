@@ -1,12 +1,12 @@
 import mock
 from django.core.urlresolvers import reverse
 from django.test import RequestFactory, TestCase
-from opaque_keys.edx.keys import CourseKey
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
 from ed2go import constants
-from ed2go.api.views import ActionView, CourseSessionView
+from ed2go.api.views import ActionView, CourseSessionView, ContentViewedView
 from ed2go.models import CourseSession
 from ed2go.tests.mixins import Ed2goTestMixin
 
@@ -109,3 +109,30 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
         self.assertEqual(session.last_activity_at, tdelta)
         self.assertNotEqual(session.created_at, tdelta)
         self.assertTrue(session.active)
+
+
+class ContentViewedTests(Ed2goTestMixin, TestCase):
+    url = reverse('ed2go.api:content-viewed')
+    usage_id = UsageKey.from_string('i4x://org.id/course_id/category/block_id')
+
+    def _make_request(self):
+        request = RequestFactory().post(
+            self.url, {'usage_id': self.usage_id}
+        )
+        request.user = self.create_user()
+        return ContentViewedView().post(request)
+
+    @mock.patch('ed2go.models.ChapterProgress.mark_subsection_viewed')
+    def test_successful_post(self, mocked_fn):
+        """ChapterProgress is marked as done and status OK is returned."""
+        response = self._make_request()
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(mocked_fn.called)
+
+    @mock.patch('ed2go.models.ChapterProgress.mark_subsection_viewed')
+    def test_not_found_post(self, mocked_fn):
+        """ChapterProgress is not marked as done and status NOT FOUND is returned."""
+        mocked_fn.return_value = False
+        response = self._make_request()
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(mocked_fn.called)
