@@ -24,23 +24,19 @@
 
         <section class="container-fluid">
           <div class="row course-forum-statistics">
-              <div class="forum-stat col-lg col-md-6 col-xs-12">
+              <div class="forum-stat col-lg-3 col-md-6 col-xs-12">
                 <h3 class="forum-stat-header">Posts in the past 30 days:</h3>
                 <span class="forum-stat-value">{{ discussions_stats.recent_posts }}</span>
               </div>
-              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
-                <h3 class="forum-stat-header">All posts:</h3>
-                <span class="forum-stat-value">{{ discussions_stats.all_posts }}</span>
-              </div>
-              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
+              <div class="forum-stat col-lg-3 col-md-6 col-xs-12 course-forum-left-border">
                 <h3 class="forum-stat-header">My discussions:</h3>
                 <span class="forum-stat-value">{{ discussions_stats.user_threads_count }}</span>
               </div>
-              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border">
+              <div class="forum-stat col-lg-3 col-md-6 col-xs-12 course-forum-left-border">
                 <h3 class="forum-stat-header">My posts:</h3>
                 <span class="forum-stat-value">{{ discussions_stats.user_comments_count }}</span>
               </div>
-              <div class="forum-stat col-lg col-md-6 col-xs-12 course-forum-left-border overflow-ellipsis">
+              <div class="forum-stat col-lg-3 col-md-6 col-xs-12 course-forum-left-border overflow-ellipsis">
                 <h3 class="forum-stat-header">Most recent post:</h3>
                 {% if  discussions_stats.latest_post %}
                   <a href="{{ discussions_stats.latest_post.courseware_url }}" class="">{{ discussions_stats.latest_post.title }}</a>
@@ -59,7 +55,12 @@
                   <div class="progress-bar-wrapper">
                     <div class="progress-bar" id="total-progress-bar" data-progress="{{ progress.progress }}"></div>
                   </div>
-                  <a href="{{ chapter.children.0.lms_web_url }}" class="btn btn-primary">Click to enter</a>
+                  <button class="btn btn-primary units-btn">Units</button>
+                  <ul class="course-section-links">
+                    {% for child in chapter.children %}
+                    <li><a href="{{ child.lms_web_url }}">{{ child.display_name }}</a></li>
+                    {% endfor %}
+                  </ul>
                 </div>
               </div>
             {% endfor %}
@@ -70,4 +71,24 @@
       </div>
     </div>
   </main>
+
+  <script>
+  $(document).ready(function() {
+    $('button.units-btn').click(function() {
+      var duration = 200;
+      var $list = $(this).parent().find('ul.course-section-links');
+
+      if ($list.hasClass('open')) {
+        $list.slideUp(duration);
+        $list.removeClass('open');
+      } else {
+        var $openList = $('ul.course-section-links.open');
+        $openList.slideUp(duration);
+        $openList.removeClass('open');
+        $list.slideDown(duration);
+        $list.addClass('open');
+      }
+    });
+  });
+  </script>
 {% endblock %}

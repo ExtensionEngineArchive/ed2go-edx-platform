@@ -11,7 +11,6 @@ body.view-learning-path.view-in-course {
 }
 
 .learning-path-main {
-
     .course-forum-statistics {
         padding: 10px 5px;
         border: 1px solid $ed-light-grey;
@@ -36,12 +35,9 @@ body.view-learning-path.view-in-course {
     }
 
     .course-sections {
-        background-color: $lightest-grey;
-
         .course-section-wrapper {
             display: inline-block;
             padding: 10px 5px;
-            background-color: $lightest-grey;
 
             .course-section {
                 padding: 10px;
@@ -62,27 +58,40 @@ body.view-learning-path.view-in-course {
                     -webkit-line-clamp: 2;
                 }
 
-                a.btn {
-                    &:hover, &:visited, &:active {
-                        color: $white;
-                    }
-
+                button.btn {
                     margin: 15px 15% 5px;
                     width: 70%;
                     background-color: $ed-blue-one;
+                    background-image: none;
+                    box-shadow: none;
                     border-color: $ed-blue-one;
+
+                    &:hover, &:visited, &:active {
+                        box-shadow: none;
+                        color: $white;
+                    }
                 }
+            }
+
+            ul.course-section-links {
+                display: none;
+                position: absolute;
+                left: 5px;
+                right: 5px;
+                margin-top: 0px;
+                z-index: 999;
+                background: #fff;
+                list-style: none;
+                padding: 10px;
+                border: 1px solid $ed-light-grey;
+                border-top: none;
+                border-radius: 0 0 10px 10px;
             }
         }
     }
 
     .course-view.container {
         padding-bottom: 50px;
-        background-color: $lightest-grey;
-    }
-
-    .profile-wrapper {
-        background-color: $lightest-grey;
     }
 
     .page-header {
