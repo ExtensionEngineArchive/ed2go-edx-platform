@@ -22,8 +22,9 @@ def check_course_sessions():
     than the THRESHOLD.
     """
     qs = CourseSession.objects.filter(active=True)  # pylint: disable=invalid-name
+    thresholded_time = now() - THRESHOLD
     for obj in qs:
-        if obj.last_activity_at < (now() - THRESHOLD):
+        if obj.last_activity_at < thresholded_time:
             obj.close(offset_delta=THRESHOLD)
 
 
