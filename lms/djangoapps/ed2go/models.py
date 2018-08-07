@@ -24,6 +24,12 @@ from ed2go.utils import XMLHandler, format_timedelta
 LOG = logging.getLogger(__name__)
 
 
+def update_enrollment(user, course_key, is_active=True):
+    """Update a course enrollment object. Used to escape sending the save signal."""
+    enrollment = CourseEnrollment.objects.get(user=user, course_id=course_key)
+    enrollment.update(is_active, is_active)
+
+
 class CourseSession(models.Model):
     """
     Keeps track of how much time a user has spent in a course.
@@ -135,27 +141,25 @@ class CompletionProfile(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Override of the default save() method. Whenever a new object is instantiated
-        we collect all the video block and problem block IDs that are in the course
-        in dictionaries where the item values represent if the user attempted/watched
-        a problem/video (defaults to False).
-
+        Override of the default save() method.
         Creating an instance of this model enrolls the user into the course.
         """
         if self.pk is None:
+            super(CompletionProfile, self).save(*args, **kwargs)
             CourseEnrollment.enroll(self.user, self.course_key)
-        super(CompletionProfile, self).save(*args, **kwargs)
+        else:
+            super(CompletionProfile, self).save(*args, **kwargs)
 
     def deactivate(self):
         """Unenroll the user prior to deactivating this instance."""
-        CourseEnrollment.unenroll(self.user, self.course_key)
+        update_enrollment(self.user, self.coures_key, False)
         self.active = False
         self.save()
         LOG.info('Deactivated course registration for user %s in course %s.', self.user, self.course_key)
 
     def activate(self):
         """Enroll the user and activate this instance."""
-        CourseEnrollment.enroll(self.user, self.course_key)
+        update_enrollment(self.user, self.coures_key, True)
         self.active = True
         self.save()
         LOG.info('Activated course registration for user %s in course %s.', self.user, self.course_key)
