@@ -281,7 +281,7 @@ urlpatterns += (
     # TODO: These views need to be updated before they work
     url(r'^calculate$', 'util.views.calculate'),
 
-    url(r'^courses/?$', 'branding.views.courses', name="courses"),
+    url(r'^courses/?$', RedirectView.as_view(url='/dashboard', permanent=True), name="courses"),
 
     #About the course
     url(

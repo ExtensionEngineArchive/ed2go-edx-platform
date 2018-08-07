@@ -713,6 +713,9 @@ def course_about(request, course_id):
 
         registered = registered_for_course(course, request.user)
 
+        if not registered:
+            return redirect(reverse('dashboard'))
+
         staff_access = bool(has_access(request.user, 'staff', course))
         studio_url = get_studio_url(course, 'settings/details')
 

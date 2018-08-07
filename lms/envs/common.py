@@ -123,7 +123,7 @@ FEATURES = {
     'ENABLE_CORS_HEADERS': False,
 
     # Can be turned off if course lists need to be hidden. Effects views and templates.
-    'COURSES_ARE_BROWSABLE': True,
+    'COURSES_ARE_BROWSABLE': False,
 
     # Enables ability to restrict enrollment in specific courses by the user account login method
     'RESTRICT_ENROLL_BY_REG_METHOD': False,

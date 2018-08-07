@@ -46,7 +46,7 @@ self.courses_url = settings.ED2GO_URL + '/student-center'
             <%
             username = self.real_user.username
             %>
-            <div class="label-username">${username}</div>
+            <div class="label-username">${username} <i class="fa fa-chevron-down"></i></div>
         </button>
         <div role="group" aria-label="User menu" class="user-menu">
             <ul class="dropdown-menu list-divided is-hidden" id="${_("Usermenu")}" tabindex="-1">
@@ -59,15 +59,6 @@ self.courses_url = settings.ED2GO_URL + '/student-center'
         </div>
     </div>
 % else:
-    <script>
-        $('body').click(function(event){
-            if (!$(event.target).closest('ul.user-dropdown-menu').length) {
-                var toggleButton = $('ol.user').find('button.user-link.user-dropdown');
-                if (toggleButton.hasClass('active'))
-                    toggleButton.click();
-            }
-        });
-    </script>
     <ol class="user">
         <li class="primary">
             <button class="user-link user-dropdown">
@@ -75,7 +66,7 @@ self.courses_url = settings.ED2GO_URL + '/student-center'
                 <%
                 username = self.real_user.username
                 %>
-                <div class="label-username">${username}</div>
+                <div class="label-username">${username} <i class="fa fa-chevron-down"></i></div>
             </button>
         </li>
         <li class="primary">
@@ -88,3 +79,21 @@ self.courses_url = settings.ED2GO_URL + '/student-center'
         </li>
     </ol>
 % endif
+
+<script>
+    $(document).ready(function() {
+        var toggleButton = $('button.user-link.user-dropdown');
+        $('body').click(function(event){
+            if (!$(event.target).closest('ul.user-dropdown-menu').length) {
+                if (toggleButton.hasClass('active'))
+                    toggleButton.click();
+            }
+        });
+
+        $(toggleButton).click(function() {
+            var $icon = $(this).find('i.fa');
+            $icon.toggleClass('fa-chevron-down')
+                    .toggleClass('fa-chevron-up');
+        });
+    });
+</script>
