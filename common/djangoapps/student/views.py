@@ -2822,4 +2822,12 @@ class LogoutView(TemplateView):
         user = request.user
         meta = json.loads(user.profile.meta) if user.is_authenticated() and user.profile.meta else {}
         logout(request)
-        return redirect(meta.get('ReturnURL', settings.LOGOUT_REDIRECT_URL))
+
+        redirect_url = settings.LOGOUT_REDIRECT_URL
+        return_url = meta.get('ReturnURL')
+        if return_url:
+            redirect_url = '{}?returnURL={}'.format(
+                settings.LOGOUT_REDIRECT_URL,
+                return_url
+            )
+        return redirect(redirect_url)
