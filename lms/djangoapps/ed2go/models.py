@@ -25,9 +25,13 @@ LOG = logging.getLogger(__name__)
 
 
 def update_enrollment(user, course_key, is_active=True):
-    """Update a course enrollment object. Used to escape sending the save signal."""
-    enrollment = CourseEnrollment.objects.get(user=user, course_id=course_key)
-    enrollment.update(is_active, is_active)
+    """
+    Update a course enrollment object.
+    Used to escape sending the save signal.
+    """
+    CourseEnrollment.objects.filter(
+        user=user, course_id=course_key
+    ).update(is_active=is_active)
 
 
 class CourseSession(models.Model):
