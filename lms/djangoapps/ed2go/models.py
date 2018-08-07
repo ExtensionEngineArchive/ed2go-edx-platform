@@ -152,14 +152,14 @@ class CompletionProfile(models.Model):
 
     def deactivate(self):
         """Unenroll the user prior to deactivating this instance."""
-        update_enrollment(self.user, self.coures_key, False)
+        update_enrollment(self.user, self.course_key, False)
         self.active = False
         self.save()
         LOG.info('Deactivated course registration for user %s in course %s.', self.user, self.course_key)
 
     def activate(self):
         """Enroll the user and activate this instance."""
-        update_enrollment(self.user, self.coures_key, True)
+        update_enrollment(self.user, self.course_key, True)
         self.active = True
         self.save()
         LOG.info('Activated course registration for user %s in course %s.', self.user, self.course_key)
