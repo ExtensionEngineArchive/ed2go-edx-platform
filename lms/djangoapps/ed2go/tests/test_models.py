@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import ddt
 import factory
 import mock
 from django.db.models import signals
@@ -7,7 +8,7 @@ from django.test import TestCase
 
 from student.models import CourseEnrollment
 
-from ed2go.models import CompletionProfile, CourseSession
+from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.tests.mixins import Ed2goTestMixin
 
 
@@ -189,3 +190,77 @@ class CompletionProfileTests(Ed2goTestMixin, TestCase):
         enrollment.refresh_from_db()
         self.assertFalse(completion_profile.active)
         self.assertFalse(enrollment.is_active)
+
+
+@ddt.ddt
+class ChapterProgressTests(Ed2goTestMixin, TestCase):
+    def setUp(self):
+        self.unit_1_id = 'unit_1'
+        self.subsection_1_id = 'subsection_1'
+        self.subsections = {
+            self.subsection_1_id: {
+                'viewed': False,
+                'units': {
+                    self.unit_1_id: {
+                        'type': ChapterProgress.UNIT_PROBLEM_TYPE,
+                        'done': False
+                    },
+                    'unit_2': {
+                        'type': ChapterProgress.UNIT_VIDEO_TYPE,
+                        'done': False
+                    },
+                }
+            }
+        }
+        self.chapter_progress = self.create_chapter_progress(subsections=self.subsections)
+
+    @ddt.data(
+        ChapterProgress.UNIT_PROBLEM_TYPE,
+        ChapterProgress.UNIT_VIDEO_TYPE
+    )
+    def test_units(self, unit_type):
+        """One unit of each type is in the subsections."""
+        units = self.chapter_progress.units(unit_type)
+        self.assertEqual(len(units), 1)
+
+    def test_get_unit(self):
+        """Correct unit is returned."""
+        unit = self.chapter_progress.get_unit(self.unit_1_id)
+        unit_1_mock = self.subsections[self.subsection_1_id]['units'][self.unit_1_id]
+        self.assertTrue(unit)
+        self.assertEqual(unit_1_mock, unit)
+
+    def test_get_invalid_unit(self):
+        """None is returned if unit isn't found."""
+        unit = self.chapter_progress.get_unit('invalid_unit_id')
+        self.assertIsNone(unit)
+
+    def test_progress(self):
+        """Correct progress percent is returned."""
+        progress = self.chapter_progress.progress
+        self.assertEqual(progress, 0)
+
+        no_subsection_cp = self.create_chapter_progress()
+        no_subsection_cp.subsections = None
+        progress_no_subs = no_subsection_cp.progress
+        self.assertEqual(progress_no_subs, 100)
+
+    def _get_user_course_key(self, cp):
+        """Return user and course_key attributes from chapter progress."""
+        user = cp.completion_profile.user
+        course_key = cp.completion_profile.course_key
+        return user, course_key
+
+    def mark_subsection_viewed(self):
+        """Subsection is marked as viewed."""
+        user, course_key = self._get_user_course_key(self.chapter_progress)
+
+        marked = ChapterProgress.mark_subsection_viewed(user, course_key, self.subsection_1_id)
+        self.assertTrue(marked)
+
+    def mark_invalid_subsection_viewed(self):
+        """Invalid subsection is not marked as viewed."""
+        user, course_key = self._get_user_course_key(self.chapter_progress)
+
+        marked = ChapterProgress.mark_subsection_viewed(user, course_key, 'invalid_subsection_id')
+        self.assertFalse(marked)

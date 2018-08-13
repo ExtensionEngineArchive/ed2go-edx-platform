@@ -1,5 +1,3 @@
-import json
-
 import factory
 import mock
 from django.db.models import signals

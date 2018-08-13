@@ -18,6 +18,10 @@ h2 {
 .window-wrap { height: 100%; }
 .content-wrapper { min-height: calc(100% - 228px); }
 
+body.view-courseware {
+  .window-wrap { height: unset; }
+}
+
 .oauth2 {
   max-width: unset;
 }

@@ -13,7 +13,7 @@ from student.tests.factories import UserFactory
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
-from ed2go.models import CompletionProfile, CourseSession
+from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 
 
 class Ed2goTestMixin(SharedModuleStoreTestCase):
@@ -38,7 +38,7 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
 
     @factory.django.mute_signals(signals.post_save)
     def create_completion_profile(self, user=None, course_key=None, reg_key=None):
-        """Create a new CompletionProfile instance with empty problems and videos attributes.
+        """Create a new CompletionProfile instance.
 
         Args:
             user (User): user added to the CompletionProfile instance.
@@ -58,6 +58,42 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
             course_key=course_key,
             registration_key=reg_key
         )
+
+    @factory.django.mute_signals(signals.post_save)
+    def create_chapter_progress(self, chapter_id='chapter_id', subsections=None):
+        """Create a new ChapterProgress instance.
+
+        Args:
+            chapter_id (str): chapter_id attribute value.
+            subsections (dict): dictionary containing custom subsections.
+
+        Returns:
+            ChapterProgresss instance.
+        """
+        completion_profile = self.create_completion_profile()
+        if not subsections:
+            subsections = {
+                'subsection_1': {
+                    'viewed': False,
+                    'units': {
+                        'unit_1': {
+                            'type': ChapterProgress.UNIT_PROBLEM_TYPE,
+                            'done': False
+                        },
+                        'unit_2': {
+                            'type': ChapterProgress.UNIT_VIDEO_TYPE,
+                            'done': False
+                        },
+                    }
+                }
+            }
+        chapter_progress = ChapterProgress.objects.create(
+            completion_profile=completion_profile,
+            chapter_id=chapter_id,
+            subsections=subsections
+        )
+
+        return chapter_progress
 
     def create_course_session(self, user=None, course_key=None, reg_key=None, new_profile=True):
         """Create new CourseSession instance.
