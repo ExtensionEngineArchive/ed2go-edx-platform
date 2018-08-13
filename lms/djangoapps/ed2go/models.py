@@ -406,13 +406,3 @@ def populate_subsections(sender, instance, created, *args, **kwargs):
                         })
         instance.subsections = subsections
         instance.save()
-
-
-@receiver(post_save, sender=CourseEnrollment, dispatch_uid='create_completion_profile_on_enrollment')
-def create_completion_profile_on_enrollment(sender, instance, created, *args, **kwargs):
-    """Whenever a user is enrolled in a course a CompletionProfile instance has to be created."""
-    profile, _ = CompletionProfile.objects.get_or_create(user=instance.user, course_key=instance.course_id)
-    if instance.is_active:
-        profile.activate()
-    else:
-        profile.deactivate()
