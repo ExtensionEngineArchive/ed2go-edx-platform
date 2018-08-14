@@ -1022,3 +1022,4 @@ ED2GO_REGISTRATION_SERVICE_URL = ENV_TOKENS.get(
     'https://api.ed2go.com/sandbox/vendor/1.2/RegistrationService.asmx'
 )
 ED2GO_SUPPORT_URL = ENV_TOKENS.get('ED2GO_SUPPORT_URL', 'https://www.ed2go.com/lti/link/support')
+SESSION_INACTIVITY_TIMEOUT_IN_SECONDS = ED2GO_SESSION_INACTIVITY_THRESHOLD
