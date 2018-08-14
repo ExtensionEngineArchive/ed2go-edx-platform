@@ -82,6 +82,10 @@ class ContentViewedView(APIView):
             Returns a 204 status code response.
         """
         usage_id = request.POST['usage_id']
-        course_key = UsageKey.from_string(usage_id).course_key
-        marked = ChapterProgress.mark_subsection_viewed(request.user, course_key, usage_id)
+        usage_key = UsageKey.from_string(usage_id)
+        marked = ChapterProgress.mark_subsection_viewed(
+            request.user,
+            usage_key.course_key,
+            usage_key.block_id
+        )
         return Response(status=204 if marked else 404)
