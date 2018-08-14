@@ -108,6 +108,7 @@ class UtilsTests(Ed2goTestMixin, TestCase):
 
     @ddt.data(
         ('input_Sample_ChemFormula_Problem_2_1=2', 'Sample_ChemFormula_Problem'),
+        ('input_c8cc8e77-bdca-b37b-f060-2b7c8084e8bc_2_1%5B%5D=choice_0', 'c8cc8e77-bdca-b37b-f060-2b7c8084e8bc'),
         ('invalid_string', None)
     )
     @ddt.unpack

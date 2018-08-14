@@ -101,6 +101,9 @@ def extract_problem_id(string):
     Extract the problem ID from the problem event input string. Example:
         string: 'input_Sample_ChemFormula_Problem_2_1=2'
     from which the problem ID is 'Sample_ChemFormula_Problem'
+    Or:
+        string: 'input_c8cc8e77-bdca-b37b-f060-2b7c8084e8bc_2_1%5B%5D=choice_0'
+    problem ID: 'c8cc8e77-bdca-b37b-f060-2b7c8084e8bc'
 
     Args:
         string (str): string from which the problem ID is extracted.
@@ -108,7 +111,7 @@ def extract_problem_id(string):
     Returns:
         The problem ID string.
     """
-    result = re.search(r'(?<=^input_)(\w*\d*)(?=_\d_\d=)', string)
+    result = re.search(r'(?<=^input_)([\w\d-]*)(?=_\d_\d)', string)
     return result.group() if result else None
 
 

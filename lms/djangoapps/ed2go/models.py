@@ -9,6 +9,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 from jsonfield import JSONField
+from opaque_keys.edx.locator import BlockUsageLocator
 from waffle import switch_is_active
 
 from lms.djangoapps.courseware.courses import get_course
@@ -256,17 +257,17 @@ class CompletionProfile(models.Model):
         return 0.5 * problems_precent + 0.5 * videos_precent
 
     @classmethod
-    def mark_progress(cls, user, course_key, usage_key):
+    def mark_progress(cls, user, course_key, block_id):
         """
         Marks a block as completed/attempted.
 
         Args:
             block_type (str): type of the block.
-            usage_key (str): usage_key of the block.
+            block_id (str): block_id of the block.
         """
         profile = cls.objects.get(user=user, course_key=course_key)
         for chapter in profile.chapterprogress.all():
-            unit = chapter.get_unit(usage_key)
+            unit = chapter.get_unit(block_id)
             if unit:
                 unit['done'] = True
                 chapter.save()
@@ -392,14 +393,16 @@ def populate_subsections(sender, instance, created, *args, **kwargs):
         for section in course_structure[instance.chapter_id]['children']:
             for subsection in course_structure[section]['children']:
                 subsection_dict = {'units': {}, 'viewed': False}
+                subsection_usage_key = BlockUsageLocator.from_string(subsection)
                 subsections.update({
-                    subsection: subsection_dict
+                    subsection_usage_key.block_id: subsection_dict
                 })
                 for unit in course_structure[subsection]['children']:
                     unit_type = course_structure[unit]['block_type']
                     if unit_type in ChapterProgress.UNIT_TYPES:
+                        usage_key = BlockUsageLocator.from_string(unit)
                         subsection_dict['units'].update({
-                            unit: {
+                            usage_key.block_id: {
                                 'type': unit_type,
                                 'done': False
                             }
