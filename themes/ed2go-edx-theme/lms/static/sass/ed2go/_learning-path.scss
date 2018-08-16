@@ -25,6 +25,10 @@ body.view-learning-path.view-in-course {
         .course-forum-left-border {
             height: 50px;
             border-left: 1px solid $ed-light-grey;
+
+            @include media($tablet-large) {
+                border-left: unset;
+            }
         }
 
         .forum-stat-value {

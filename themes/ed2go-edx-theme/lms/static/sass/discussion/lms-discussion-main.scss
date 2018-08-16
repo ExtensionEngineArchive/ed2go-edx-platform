@@ -1,3 +1,39 @@
 @import 'lms/static/sass/discussion/lms-discussion-main';
+
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,600,700');
+@import '../ed2go/media';
+
 @import '../ed2go/discussion';
 @import '../ed2go/footer';
+
+.header-global.slim {
+  .course-header {
+    display: inline-block;
+    margin: 10px 10px 0px 10px;
+    width: 65%;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+.wrapper-course-material {
+  border-bottom: 1px solid $ed-med-grey;
+
+  .course-tabs li {
+    @include media($tablet-large) {
+      display: block!important;
+    }
+
+    a:active,
+    a:focus,
+    a:hover,
+    a.active,
+    a.active:hover,
+    a.active:visited,
+    a:visited:hover {
+      color: $ed-blue-one;
+      border-bottom-color: $ed-blue-one;
+    }
+  }
+}
