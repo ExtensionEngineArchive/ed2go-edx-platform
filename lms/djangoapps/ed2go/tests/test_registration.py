@@ -20,7 +20,7 @@ REGISTRATION_DATA = {
         'StudentKey': '60accf5f-51f1-4a73-8b70-9654a00ce4ab'
     },
     'Course': {
-        'Code': 'test123'
+        'Code': 'DEV123x+2018_T2'
     },
     'ReturnURL': 'www.example.com'
 }
