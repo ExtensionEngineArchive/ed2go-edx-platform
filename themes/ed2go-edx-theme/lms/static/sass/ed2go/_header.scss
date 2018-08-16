@@ -19,12 +19,22 @@
   }
 
   &.slim {
+    .course-header {
+      @include media($tablet-large) {
+        margin: 0 10px!important;
+      }
+    }
+
     .wrapper-header {
       padding-top: 0!important;
     }
   }
 
   .user {
+    @include media($tablet-large) {
+      width: 25%;
+    }
+
     .user-dropdown-menu {
       top: 60px;
       right: 30px;
@@ -39,9 +49,15 @@
     .primary {
       .user-link.user-dropdown {
         outline: none;
-        background: $ed-blue-one;
+        background: transparent;
         color: $ed-lighter-grey;
         font-family: 'Open Sans';
+
+        .label-username {
+          @include media($tablet-large) {
+            margin: 0 15px;
+          }
+        }
       }
     }
   }

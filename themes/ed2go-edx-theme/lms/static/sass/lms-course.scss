@@ -4,23 +4,20 @@
 @import 'ed2go/course-tabs';
 
 #course-content {
+  .sequence-nav {
+    @include media($tablet-large) {
+      justify-content: center;
+    }
+  }
   .sequence-list-wrapper {
     @include media($tablet-large) {
-      width: 100px;
-      overflow-x: scroll;
-      overflow-y: hidden;
+      display: none;
     }
+  }
 
-    li {
-      @include media($tablet-large) {
-        min-width: 60px;
-      }
-
-      .sequence-tooltip {
-        @include media($tablet-large) {
-          display: none;
-        }
-      }
+  #seq_content {
+    @include media($tablet-large) {
+      overflow-y: scroll;
     }
   }
 }
