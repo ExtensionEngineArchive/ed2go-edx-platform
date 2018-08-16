@@ -3,6 +3,11 @@
 }
 
 footer {
+  .row {
+    margin-left: unset;
+    margin-right: unset;
+  }
+
   .logo-links {
     a {
       padding: 0 10px;
