@@ -119,6 +119,15 @@ from openedx.core.lib.courses import course_image_url
             ${course.display_name_with_default_escaped}
           </h1>
         </div>
+        <div class="main-cta">
+          %if user.is_authenticated() and registered:
+            %if show_courseware_link:
+              <a href="${course_target}">
+              <strong>${_("Enter Course")}</strong>
+              </a>
+            % endif
+          %endif
+        </div>
       </section>
       % if get_course_about_section(request, course, "video"):
       <a href="#video-modal" class="media" rel="leanModal">
