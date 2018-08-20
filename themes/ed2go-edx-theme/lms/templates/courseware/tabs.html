@@ -16,6 +16,9 @@ def url_class(is_active):
 
 % for tab in tab_list:
   <%
+    about_active = False
+    if not active_page:
+      about_active = True
     tab_is_active = tab.tab_id in (active_page, default_tab)
     tab_class = url_class(tab_is_active)
   %>
@@ -39,7 +42,7 @@ def url_class(is_active):
   </li>
     % if tab.name == 'Home':
       <li class="tab">
-        <a href="${reverse('about_course', args=[course.id])}" class="about-tab">About</a>
+        <a href="${reverse('about_course', args=[course.id])}" class="about-tab ${'active' if about_active else ''}">About</a>
         % if tab_is_active:
         <span class="sr">, current location</span>
       </li>
