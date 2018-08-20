@@ -6,6 +6,10 @@
   }
 }
 
+.wrapper-course-material .course-tabs {
+  padding-bottom: 0px;
+}
+
 .course-info {
   .details {
     padding: 3%;
@@ -21,6 +25,8 @@
   header.course-profile {
     height: auto;
     padding: 100px;
+    margin-top: unset;
+    margin-bottom: 70px;
 
     .intro-inner-wrapper {
       border-radius: 10px;

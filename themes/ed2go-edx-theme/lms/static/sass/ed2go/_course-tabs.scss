@@ -2,6 +2,8 @@
   border-bottom: 1px solid $ed-med-grey;
 
   .course-tabs li {
+    display: inline-block;
+
     @include media($tablet-large) {
       display: block;
     }
