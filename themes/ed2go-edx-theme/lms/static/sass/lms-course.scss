@@ -25,3 +25,7 @@
 .content-wrapper {
   min-height: calc(100vh - 245px);
 }
+
+button:hover {
+  color: $ed-blue-one;
+}

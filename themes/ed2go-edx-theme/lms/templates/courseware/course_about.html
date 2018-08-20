@@ -3,6 +3,7 @@
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from courseware.courses import get_course_about_section
+from courseware.tabs import get_course_tab_list
 from django.conf import settings
 from edxmako.shortcuts import marketing_link
 from openedx.core.djangolib.markup import HTML
@@ -108,6 +109,19 @@ from openedx.core.lib.courses import course_image_url
     height: auto;
   }
 </style>
+
+<nav class="wrapper-course-material" aria-label="${_('Course Material')}">
+  <div class="course-material">
+      <%
+      tab_list = get_course_tab_list(request, course)
+      tabs_tmpl = static.get_template_path('/courseware/tabs.html')
+      %>
+      <ol class="tabs course-tabs">
+          <%include file="${tabs_tmpl}" args="tab_list=tab_list,active_page=None,default_tab=default_tab,tab_image=tab_image" />
+          <%block name="extratabs" />
+      </ol>
+  </div>
+</nav>
 
 <section class="course-info">
   <header class="course-profile">
