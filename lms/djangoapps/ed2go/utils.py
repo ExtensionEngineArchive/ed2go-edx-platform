@@ -14,6 +14,7 @@ from django.utils.timezone import now
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 
 from ed2go import constants as c
+from ed2go.exceptions import InvalidEd2goRequestError
 from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def checksum_valid(request_data, request_type):
         bool: True if the received checksum is correct, False otherwise.
 
     Raises:
-        Exception:
+        InvalidEd2goRequestError:
             - the checksum in the request cannot be empty
             - the request type needs to be either an SSO or an Action request
             - none of the parameters needed for checksum generation can be empty
@@ -55,20 +56,20 @@ def checksum_valid(request_data, request_type):
 
     checksum = request_data.get(c.CHECKSUM)
     if checksum is None:
-        raise Exception('Checksum cannot be empty.')
+        raise InvalidEd2goRequestError('Checksum cannot be empty.')
 
     if request_type == c.SSO_REQUEST:
         checksum_params = c.SSO_CHECKSUM_PARAMS
     elif request_type == c.ACTION_REQUEST:
         checksum_params = c.ACTION_CHECKSUM_PARAMS
     else:
-        raise Exception('Request type %s not supported.' % request_type)
+        raise InvalidEd2goRequestError('Request type %s not supported.' % request_type)
 
     value_list = [api_key]
     for param in checksum_params:
         param_value = request_data.get(param)
         if param_value is None:
-            raise Exception('Param %s cannot be empty.' % param)
+            raise InvalidEd2goRequestError('Param %s cannot be empty.' % param)
         value_list.append(urllib.unquote(param_value))
 
     checksum_string = ''.join(value_list)
