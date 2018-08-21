@@ -1,3 +1,7 @@
+import logging
+
+import requests
+from django.conf import settings
 from django.contrib.auth.models import User
 from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.response import Response
@@ -8,9 +12,159 @@ from ed2go.exceptions import CompletionProfileAlreadyExists
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import update_registration
 from ed2go.utils import request_valid
+from ed2go.xml_handler import XMLHandler
+
+LOG = logging.getLogger(__name__)
 
 
 class ActionView(APIView):
+    def update_registration_status_request(self, reg_key, ref_id, status, note=None):
+        """
+        Send a registration status update to the RegistrationService API.
+
+        Args:
+            reg_key (str) - the registration key
+            ref_id (int) - ReferenceID from the action request
+            status (str) - one of the possible registration statuses listed in
+                           constants.UPDATE_REGISTRATION_STATUSES
+            note (str) - optional note
+        """
+        xmlh = XMLHandler()
+        data = {
+            c.REQ_UPDATE_REGISTRATION_STATUS: {
+                c.REQ_API_KEY: settings.ED2GO_API_KEY,
+                c.REG_REGISTRATION_KEY: reg_key,
+                c.REG_REFERENCE_ID: ref_id,
+                c.REG_REGISTRATION_STATUS: status
+            }
+        }
+        if note:
+            data[c.REQ_UPDATE_REGISTRATION_STATUS][c.REQ_NOTE] = note
+
+        request_data = xmlh.request_data_from_dict(data)
+        response = requests.post(
+            settings.ED2GO_REGISTRATION_SERVICE_URL,
+            data=request_data,
+            headers=xmlh.headers
+        )
+
+        if response.status_code != 200:
+            LOG.info(
+                '%s request failed with status %d',
+                c.REQ_UPDATE_REGISTRATION_STATUS,
+                response.status_code
+            )
+        else:
+            response_data = xmlh.get_response_data_from_xml(
+                action_name=c.REQ_UPDATE_REGISTRATION_STATUS,
+                xml=response.content
+            )
+            if response_data[c.RESP_SUCCESS] == 'false':
+                LOG.error(
+                    '%s request failed with message %s',
+                    c.REQ_UPDATE_REGISTRATION_STATUS,
+                    response_data[c.RESP_MESSAGE]
+                )
+            else:
+                LOG.info('%s request processed!', c.REQ_UPDATE_REGISTRATION_STATUS)
+
+    def new_registration_action_handler(self, registration_key):
+        """
+        Handles the NewRegistration action requests.
+        Creates a new CompletionProfile based on the data fetched from ed2go API
+        via the passed in registration_key value.
+
+        Args:
+            registration_key (str): the registration key
+
+        Returns:
+            - response message
+            - response status code - 201 if created, 400 if profile already exists
+        """
+        try:
+            completion_profile = CompletionProfile.create(registration_key)
+        except CompletionProfileAlreadyExists:
+            completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
+            msg = 'Completion Profile already exists for registration key {reg_key}'.format(
+                reg_key=registration_key
+            )
+            LOG.error(msg)
+            self.update_registration_status_request(
+                reg_key=registration_key,
+                ref_id=completion_profile.reference_id,
+                status=c.REG_REGISTRATION_REJECTED_STATUS,
+                note='Registration already exists in the system'
+            )
+            return msg, 400
+
+        msg = 'Completion Profile created for user {user} and course {course}.'.format(
+            user=completion_profile.user.username,
+            course=completion_profile.course_key
+        )
+        LOG.info(msg)
+        self.update_registration_status_request(
+            reg_key=registration_key,
+            ref_id=completion_profile.reference_id,
+            status=c.REG_REGISTRATION_PROCESSED_STATUS
+        )
+        return msg, 201
+
+    def update_registration_action_handler(self, registration_key):
+        """
+        Handles the UpdateRegistration action requests.
+        Updates the user information based on the data fetched from ed2go API
+        via the passed in registration_key value.
+
+        Args:
+            registration_key (str): the registration key
+
+        Returns:
+            - response message
+            - response status code - 200 for successful update
+        """
+        completion_profile = update_registration(registration_key)
+        msg = 'User {user} information updated.'.format(user=completion_profile.user.username)
+        LOG.info(msg)
+        self.update_registration_status_request(
+            reg_key=registration_key,
+            ref_id=completion_profile.reference_id,
+            status=c.REG_UPDATE_PROCESSED_STATUS
+        )
+        return msg, 200
+
+    def cancel_registration_action_handler(self, registration_key):
+        """
+        Handles the CancelRegistration action requests.
+        Deactivates the Completion Profile specified by the passed in registration_key value.
+
+        Args:
+            registration_key (str): the registration key
+
+        Returns:
+            - response message
+            - response status code - 200 for successful deactivation, 404 if can't find
+                                     the completion profile based on the registration_key
+        """
+        try:
+            completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
+            completion_profile.deactivate()
+        except CompletionProfile.DoesNotExist:
+            msg = 'Completion Profile with registration key {reg_key} does not exist'.format(
+                reg_key=registration_key
+            )
+            LOG.error(msg)
+            return msg, 404
+
+        msg = 'Completion profile with registration key [{}] deactivated.'.format(registration_key)
+        LOG.info(msg)
+
+        self.update_registration_status_request(
+            reg_key=registration_key,
+            ref_id=completion_profile.reference_id,
+            status=c.REG_CANCELLATION_PROCESSED_STATUS
+        )
+        return msg, 200
+
     def post(self, request):
         """
         POST request handler. Handles the action requests from Ed2go. Actions supported:
@@ -30,36 +184,17 @@ class ActionView(APIView):
         registration_key = request.data.get(c.REGISTRATION_KEY)
 
         if action == c.NEW_REGISTRATION_ACTION:
-            try:
-                completion_profile = CompletionProfile.create(registration_key)
-            except CompletionProfileAlreadyExists:
-                msg = 'Completion Profile already exists for registration key {reg_key}'.format(
-                    reg_key=registration_key
-                )
-                return Response(msg, status=400)
-
-            msg = 'Completion Profile created for user {user} and course {course}.'.format(
-                user=completion_profile.user.username,
-                course=completion_profile.course_key
-            )
-            return Response(msg, status=201)
+            msg, status_code = self.new_registration_action_handler(registration_key)
         elif action == c.UPDATE_REGISTRATION_ACTION:
-            user = update_registration(registration_key)
-            msg = 'User {user} information updated.'.format(user=user.username)
+            msg, status_code = self.update_registration_action_handler(registration_key)
         elif action == c.CANCEL_REGISTRATION_ACTION:
-            try:
-                CompletionProfile.objects.get(registration_key=registration_key).deactivate()
-            except CompletionProfile.DoesNotExist:
-                return Response(
-                    'Completion Profile with registration key {reg_key} does not exist'.format(
-                        reg_key=registration_key
-                    ),
-                    status=404
-                )
-            msg = 'Completion profile deactivated.'
+            msg, status_code = self.cancel_registration_action_handler(registration_key)
         else:
-            return Response('Action %s not supported.' % action, status=400)
-        return Response(msg, status=200)
+            msg = 'Action {action} not supported.'.format(action=action)
+            status_code = 400
+            LOG.error(msg)
+
+        return Response(msg, status=status_code)
 
 
 class CourseSessionView(APIView):

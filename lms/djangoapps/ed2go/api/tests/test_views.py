@@ -26,46 +26,64 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
             response = ActionView().post(request)
         return response
 
+    @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
     @mock.patch('ed2go.models.CompletionProfile.create')
-    def test_new_registration(self, mocked_fn):
+    def test_new_registration(self, create_mock, update_mock):
         """Creating completion profile method is called."""
         completion_profile = self.create_completion_profile(user=self.user)
-        mocked_fn.return_value = completion_profile
+        create_mock.return_value = completion_profile
         response = self._make_request(c.NEW_REGISTRATION_ACTION)
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(mocked_fn.called)
+        self.assertTrue(create_mock.called)
+        self.assertTrue(update_mock.called)
+        _, kwargs = update_mock.call_args
+        self.assertEqual(kwargs['status'], c.REG_REGISTRATION_PROCESSED_STATUS)
 
-    def test_new_registration_rejected(self):
+    @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
+    def test_new_registration_rejected(self, update_mock):
         """Request is rejected because of already existing Completion Profile."""
         completion_profile = self.create_completion_profile(user=self.user)
         response = self._make_request(
-            action=c.NEW_REGISTRATION_ACTION,
+            c.NEW_REGISTRATION_ACTION,
             reg_key=completion_profile.registration_key
         )
         self.assertEqual(response.status_code, 400)
+        self.assertTrue(update_mock.called)
+        _, kwargs = update_mock.call_args
+        self.assertEqual(kwargs['status'], c.REG_REGISTRATION_REJECTED_STATUS)
 
+    @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
     @mock.patch('ed2go.api.views.update_registration')
-    def test_update_registration(self, mocked_fn):
+    def test_update_registration(self, update_reg_mock, update_status_mock):
         """Updating completion profile function is called."""
-        mocked_fn.return_value = self.user
+        completion_profile = self.create_completion_profile(user=self.user)
+        update_reg_mock.return_value = completion_profile
         response = self._make_request(c.UPDATE_REGISTRATION_ACTION)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(mocked_fn.called)
 
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(update_reg_mock.called)
+        self.assertTrue(update_status_mock.called)
+        _, kwargs = update_status_mock.call_args
+        self.assertEqual(kwargs['status'], c.REG_UPDATE_PROCESSED_STATUS)
+
+    @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
     @mock.patch('ed2go.models.CompletionProfile.deactivate')
-    def test_cancel_registration(self, mocked_fn):
+    def test_cancel_registration(self, deactivate_mock, update_mock):
         """Deactivates the completion profile."""
         reg_key = 'dummy-key'
-        mocked_fn.return_value = True
+        deactivate_mock.return_value = True
         self.create_completion_profile(user=self.user, reg_key=reg_key)
 
         response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key=reg_key)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(mocked_fn.called)
+        self.assertTrue(deactivate_mock.called)
+        self.assertTrue(update_mock.called)
+        _, kwargs = update_mock.call_args
+        self.assertEqual(kwargs['status'], c.REG_CANCELLATION_PROCESSED_STATUS)
 
     def test_cancel_invalid_registration(self):
-        """Cancel registration equest is rejected because of non-existing registration."""
+        """Cancel registration request is rejected because of non-existing registration."""
         response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key='invalid')
         self.assertEqual(response.status_code, 404)
 

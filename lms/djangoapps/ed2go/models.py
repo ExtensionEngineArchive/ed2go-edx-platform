@@ -185,7 +185,7 @@ class CompletionProfile(models.Model):
         """Sends the generated completion report to the Ed2go completion report endpoint."""
         if switch_is_active(c.ENABLED_ED2GO_COMPLETION_REPORTING):
             report = self.report
-            report[c.REP_API_KEY] = settings.ED2GO_API_KEY
+            report[c.REQ_API_KEY] = settings.ED2GO_API_KEY
             url = settings.ED2GO_REGISTRATION_SERVICE_URL
             xmlh = XMLHandler()
 
