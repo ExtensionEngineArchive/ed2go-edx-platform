@@ -14,7 +14,7 @@ from django.utils.timezone import now
 
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 
-from ed2go import constants
+from ed2go import constants as c
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def request_expired(request_data):
     Returns:
         bool: True if the expiration date has passed, False otherwise.
     """
-    expiration_datetime = request_data.get(constants.REQUEST_EXPIRATION_DATETIME)
+    expiration_datetime = request_data.get(c.REQUEST_EXPIRATION_DATETIME)
     expiration_datetime = parse(urllib.unquote(expiration_datetime))
     return now() > expiration_datetime
 
@@ -53,14 +53,14 @@ def checksum_valid(request_data, request_type):
     """
     api_key = settings.ED2GO_API_KEY
 
-    checksum = request_data.get(constants.CHECKSUM)
+    checksum = request_data.get(c.CHECKSUM)
     if checksum is None:
         raise Exception('Checksum cannot be empty.')
 
-    if request_type == constants.SSO_REQUEST:
-        checksum_params = constants.SSO_CHECKSUM_PARAMS
-    elif request_type == constants.ACTION_REQUEST:
-        checksum_params = constants.ACTION_CHECKSUM_PARAMS
+    if request_type == c.SSO_REQUEST:
+        checksum_params = c.SSO_CHECKSUM_PARAMS
+    elif request_type == c.ACTION_REQUEST:
+        checksum_params = c.ACTION_CHECKSUM_PARAMS
     else:
         raise Exception('Request type %s not supported.' % request_type)
 
@@ -323,9 +323,9 @@ def get_registration_data(reg_key):
     api_key = settings.ED2GO_API_KEY
     xmlh = XMLHandler()
     data = {
-        'GetRegistration': {
-            'APIKey': api_key,
-            'RegistrationKey': reg_key
+        c.REQ_GET_REGISTRATION: {
+            c.REQ_API_KEY: api_key,
+            c.REQ_REGISTRATION_KEY: reg_key
         }
     }
     request_data = xmlh.request_data_from_dict(data)

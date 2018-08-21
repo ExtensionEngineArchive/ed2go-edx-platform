@@ -3,7 +3,7 @@ from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ed2go import constants
+from ed2go import constants as c
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import get_or_create_user_completion_profile, update_registration
 from ed2go.utils import request_valid
@@ -21,24 +21,24 @@ class ActionView(APIView):
             Response with code 200 if the request was completed.
             Response with code 400 if the request was not valid or the action is not supported.
         """
-        valid, msg = request_valid(request.data, constants.ACTION_REQUEST)
+        valid, msg = request_valid(request.data, c.ACTION_REQUEST)
         if not valid:
             return Response(msg, status=400)
 
-        action = request.data.get(constants.ACTION)
-        registration_key = request.data.get(constants.REGISTRATION_KEY)
+        action = request.data.get(c.ACTION)
+        registration_key = request.data.get(c.REGISTRATION_KEY)
 
-        if action == constants.NEW_REGISTRATION_ACTION:
+        if action == c.NEW_REGISTRATION_ACTION:
             user, completion_profile = get_or_create_user_completion_profile(registration_key)
             msg = 'User {user} created and enrolled into {course}.'.format(
                 user=user.username,
                 course=completion_profile.course_key
             )
             return Response(msg, status=201)
-        elif action == constants.UPDATE_REGISTRATION_ACTION:
+        elif action == c.UPDATE_REGISTRATION_ACTION:
             user = update_registration(registration_key)
             msg = 'User {user} information updated.'.format(user=user.username)
-        elif action == constants.CANCEL_REGISTRATION_ACTION:
+        elif action == c.CANCEL_REGISTRATION_ACTION:
             CompletionProfile.objects.get(registration_key=registration_key).deactivate()
             msg = 'Completion profile deactivated.'
         else:

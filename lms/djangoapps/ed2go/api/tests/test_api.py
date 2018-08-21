@@ -5,7 +5,7 @@ from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
-from ed2go import constants
+from ed2go import constants as c
 from ed2go.api.views import ActionView, CourseSessionView, ContentViewedView
 from ed2go.models import CourseSession
 from ed2go.tests.mixins import Ed2goTestMixin
@@ -20,7 +20,7 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
     def _make_request(self, action, reg_key='dummy-key', valid_request=True):
         request = Request(APIRequestFactory().post(
             self.url,
-            {constants.ACTION: action, constants.REGISTRATION_KEY: reg_key}
+            {c.ACTION: action, c.REGISTRATION_KEY: reg_key}
         ))
         with mock.patch('ed2go.api.views.request_valid', return_value=(valid_request, '')):
             response = ActionView().post(request)
@@ -31,7 +31,7 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         """Creating completion profile function is called."""
         completion_profile = self.create_completion_profile(user=self.user)
         mocked_fn.return_value = (self.user, completion_profile)
-        response = self._make_request(constants.NEW_REGISTRATION_ACTION)
+        response = self._make_request(c.NEW_REGISTRATION_ACTION)
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(mocked_fn.called)
@@ -40,7 +40,7 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
     def test_update_registration(self, mocked_fn):
         """Updating completion profile function is called."""
         mocked_fn.return_value = self.user
-        response = self._make_request(constants.UPDATE_REGISTRATION_ACTION)
+        response = self._make_request(c.UPDATE_REGISTRATION_ACTION)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(mocked_fn.called)
 
@@ -50,7 +50,7 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         completion_profile = self.create_completion_profile(user=self.user, reg_key=reg_key)
         self.assertTrue(completion_profile.active)
 
-        response = self._make_request(constants.CANCEL_REGISTRATION_ACTION, reg_key=reg_key)
+        response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key=reg_key)
         self.assertEqual(response.status_code, 200)
 
         completion_profile.refresh_from_db()
