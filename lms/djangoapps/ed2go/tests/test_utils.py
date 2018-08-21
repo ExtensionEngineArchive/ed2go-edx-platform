@@ -7,7 +7,8 @@ import requests
 from django.conf import settings
 from django.test import TestCase
 
-from ed2go import constants
+from ed2go import constants as c
+from ed2go.exceptions import InvalidEd2goRequestError
 from ed2go.tests.mixins import Ed2goTestMixin
 from ed2go.utils import (
     extract_course_id_from_url,
@@ -25,17 +26,17 @@ from ed2go.xml_handler import XMLHandler
 @ddt.ddt
 class UtilsTests(Ed2goTestMixin, TestCase):
     request_data_fixture = {
-        constants.SSO_REQUEST: {
-            constants.CHECKSUM: '',
-            constants.REGISTRATION_KEY: 'dummy-key',
-            constants.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
-            constants.RETURN_URL: 'www.example.com'
+        c.SSO_REQUEST: {
+            c.CHECKSUM: '',
+            c.REGISTRATION_KEY: 'dummy-key',
+            c.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
+            c.RETURN_URL: 'www.example.com'
         },
-        constants.ACTION_REQUEST: {
-            constants.CHECKSUM: '',
-            constants.ACTION: 'dummy-action',
-            constants.REGISTRATION_KEY: 'dummy-key',
-            constants.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
+        c.ACTION_REQUEST: {
+            c.CHECKSUM: '',
+            c.ACTION: 'dummy-action',
+            c.REGISTRATION_KEY: 'dummy-key',
+            c.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
         }
     }
 
@@ -43,7 +44,7 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Returns False if request not expired."""
         time = self.freeze_time()
         request_data = {
-            constants.REQUEST_EXPIRATION_DATETIME: str(time + timedelta(minutes=10))
+            c.REQUEST_EXPIRATION_DATETIME: str(time + timedelta(minutes=10))
         }
         self.assertFalse(request_expired(request_data))
 
@@ -51,14 +52,14 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Returns True if request expired."""
         time = self.freeze_time()
         request_data = {
-            constants.REQUEST_EXPIRATION_DATETIME: str(time - timedelta(minutes=10))
+            c.REQUEST_EXPIRATION_DATETIME: str(time - timedelta(minutes=10))
         }
         self.assertTrue(request_expired(request_data))
 
     @ddt.data(
-        (constants.SSO_REQUEST, constants.SSO_CHECKSUM_PARAMS, True),
-        (constants.ACTION_REQUEST, constants.ACTION_CHECKSUM_PARAMS, True),
-        (constants.ACTION_REQUEST, [], False),
+        (c.SSO_REQUEST, c.SSO_CHECKSUM_PARAMS, True),
+        (c.ACTION_REQUEST, c.ACTION_CHECKSUM_PARAMS, True),
+        (c.ACTION_REQUEST, [], False),
     )
     @ddt.unpack
     def test_checksum_check(self, request_type, checksum_params, expected_bool):
@@ -67,30 +68,31 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         checksum_value_list = [request_data[param] for param in checksum_params]
         checksum_value_list.insert(0, settings.ED2GO_API_KEY)
 
-        request_data[constants.CHECKSUM] = hashlib.sha1(''.join(checksum_value_list)).hexdigest()
+        request_data[c.CHECKSUM] = hashlib.sha1(''.join(checksum_value_list)).hexdigest()
 
         self.assertEqual(checksum_valid(request_data, request_type), expected_bool)
 
-    @ddt.data(
-        ({}, constants.SSO_REQUEST),
-        ({constants.CHECKSUM: 'dummy-checksum'}, 'invalid-type')
-    )
-    @ddt.unpack
-    def test_checksum__check_missing_exception(self, request_data, request_type):
-        """Exception is raised when:
-            * a request without checksum is sent
-            * an invalid request type is sent
-        """
-        with self.assertRaises(Exception):
-            checksum_valid(request_data, request_type)
+    def test_checksum_check_missing_exception(self):
+        """InvalidEd2goRequestError is raised when a request without checksum is sent."""
+        type = c.SSO_REQUEST
+        data = self.request_data_fixture[type]
+        data.pop(c.CHECKSUM)
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(data, type)
+
+    def test_checksum_invalid_request_type(self):
+        """InvalidEd2goRequestError is raised when an invalid request type is sent."""
+        data = self.request_data_fixture[c.SSO_REQUEST]
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(data, 'invalid-type')
 
     def test_checksum_check_empty_param_exception(self):
-        """Exception is raised when a param value is missing."""
-        request_data = self.request_data_fixture[constants.SSO_REQUEST].copy()
-        request_data[constants.REGISTRATION_KEY] = None
+        """InvalidEd2goRequestError is raised when a param value is missing."""
+        request_data = self.request_data_fixture[c.SSO_REQUEST].copy()
+        request_data[c.REGISTRATION_KEY] = None
 
-        with self.assertRaises(Exception):
-            checksum_valid(request_data, constants.SSO_REQUEST)
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(request_data, c.SSO_REQUEST)
 
     @ddt.data(
         (False, True, True),
@@ -102,7 +104,7 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Request is valid when requirements are fulfilled."""
         with mock.patch('ed2go.utils.request_expired', return_value=request_exp), \
                 mock.patch('ed2go.utils.checksum_valid', return_value=chksum_valid):
-            valid, _ = request_valid({}, constants.SSO_REQUEST)
+            valid, _ = request_valid({}, c.SSO_REQUEST)
             self.assertEqual(valid, expected)
 
     @ddt.data(
