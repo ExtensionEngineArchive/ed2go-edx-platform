@@ -20,7 +20,8 @@ from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
 
 from ed2go import constants as c
-from ed2go.utils import XMLHandler, format_timedelta
+from ed2go.utils import format_timedelta
+from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
 

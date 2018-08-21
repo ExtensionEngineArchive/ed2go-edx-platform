@@ -9,7 +9,7 @@ from waffle import switch_is_active
 
 from ed2go import constants as c
 from ed2go.models import CompletionProfile, CourseSession
-from ed2go.utils import XMLHandler
+from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
 THRESHOLD = timedelta(seconds=settings.ED2GO_SESSION_INACTIVITY_THRESHOLD)
