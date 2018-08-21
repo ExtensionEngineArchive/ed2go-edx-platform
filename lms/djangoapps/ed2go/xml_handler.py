@@ -115,11 +115,12 @@ class XMLHandler(object):
         elements = self._extract_elements_from_xml(xml, path)
         return self.dict_from_xml(elements[0])
 
-    def completion_update_response_data_from_xml(self, xml):
+    def get_response_data_from_xml(self, response_name, xml):
         """
-        Extract the completion update response XML elements from the XML tree.
+        Extract the response XML elements from the XML tree.
 
         Args:
+            response_name (str): Name of the particular response
             xml (str): XML tree in string format (raw content from the GetRegistration endpoint.)
 
         Returns:
@@ -128,10 +129,16 @@ class XMLHandler(object):
                     - Success
                     - Code
                     - Message
+            Example:
+                {
+                    'Success': 'true',
+                    'Code': 123,
+                    'Message': 'Action was successful.'
+                }
         """
         path = './soap:Body' \
-               '/a:UpdateCompletionReportResponse' \
+               '/a:{response_name}' \
                '/a:Response' \
-               '/a:Result'
+               '/a:Result'.format(response_name=response_name)
         elements = self._extract_elements_from_xml(xml, path)
         return self.dict_from_xml(elements[0])

@@ -2,6 +2,7 @@ from xml.etree import ElementTree
 
 from django.test import TestCase
 
+from ed2go import constants as c
 from ed2go.xml_handler import XMLHandler
 
 
@@ -67,4 +68,8 @@ class XMLHandlerTests(TestCase):
             '</soap:Body>' \
             '</soap:Envelope>'
 
-        self.assertEqual(self.xmlh.completion_update_response_data_from_xml(test_response_xml), expected)
+        result = self.xmlh.get_response_data_from_xml(
+            response_name=c.RESP_UPDATE_COMPLETION_REPORT,
+            xml=test_response_xml
+        )
+        self.assertEqual(result, expected)

@@ -57,6 +57,9 @@ REP_COURSE_PASSED = 'CoursePassed'
 REP_COMPLETION_DT = 'CompletionDatetimeGMT'
 REP_TIME_SPENT = 'TimeSpent'
 
+# Response names
+RESP_UPDATE_COMPLETION_REPORT = 'UpdateCompletionReportResponse'
+
 # Response attributes
 RESP_SUCCESS = 'Success'
 RESP_CODE = 'Code'
