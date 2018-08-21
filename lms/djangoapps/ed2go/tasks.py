@@ -9,7 +9,7 @@ from waffle import switch_is_active
 
 from ed2go import constants as c
 from ed2go.models import CompletionProfile, CourseSession
-from ed2go.utils import XMLHandler
+from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
 THRESHOLD = timedelta(seconds=settings.ED2GO_SESSION_INACTIVITY_THRESHOLD)
@@ -52,7 +52,10 @@ def send_completion_report():
             headers=xmlh.headers
         )
         if response.status_code == 200:
-            response_data = xmlh.completion_update_response_data_from_xml(response.content)
+            response_data = xmlh.get_response_data_from_xml(
+                response_name=c.RESP_UPDATE_COMPLETION_REPORT,
+                xml=response.content
+            )
             if response_data[c.RESP_SUCCESS] == 'true':
                 LOG.info('Sent batch completion report update.')
                 return True

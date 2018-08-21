@@ -20,7 +20,8 @@ from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
 
 from ed2go import constants as c
-from ed2go.utils import XMLHandler, format_timedelta
+from ed2go.utils import format_timedelta
+from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ class CompletionProfile(models.Model):
             url = settings.ED2GO_REGISTRATION_SERVICE_URL
             xmlh = XMLHandler()
 
-            data = xmlh.request_data_from_dict({'UpdateCompletionReport': report})
+            data = xmlh.request_data_from_dict({c.REQ_UPDATE_COMPLETION_REPORT: report})
             response = requests.post(url, data=data, headers=xmlh.headers)
 
             error_msg = 'Error sending completion update report: %s'
@@ -185,7 +186,10 @@ class CompletionProfile(models.Model):
                 LOG.error(error_msg, response.reason)
                 return False
 
-            response_data = xmlh.completion_update_response_data_from_xml(response.content)
+            response_data = xmlh.get_response_data_from_xml(
+                response_name=c.RESP_UPDATE_COMPLETION_REPORT,
+                xml=response.content
+            )
             if response_data[c.RESP_SUCCESS] == 'false':
                 LOG.error(error_msg, str(response_data[c.RESP_CODE]))
             else:

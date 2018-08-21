@@ -1,6 +1,5 @@
 import hashlib
 from datetime import timedelta, datetime
-from xml.etree import ElementTree
 
 import ddt
 import mock
@@ -11,7 +10,6 @@ from django.test import TestCase
 from ed2go import constants
 from ed2go.tests.mixins import Ed2goTestMixin
 from ed2go.utils import (
-    XMLHandler,
     extract_course_id_from_url,
     format_timedelta,
     generate_username,
@@ -21,6 +19,7 @@ from ed2go.utils import (
     request_expired,
     request_valid
 )
+from ed2go.xml_handler import XMLHandler
 
 
 @ddt.ddt
@@ -179,68 +178,3 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """If response is a non-200 status code, None should be returned."""
         request_mock.return_value = self._mock_post_request(status_code=400)
         self.assertIsNone(get_registration_data('dummy-reg-key'))
-
-
-class XMLHandlerTests(TestCase):
-    def setUp(self):
-        self.xmlh = XMLHandler()
-
-    def test_xml_from_dict(self):
-        """Correctly convert a dictionary to XML."""
-        data = {
-            'root': {
-                'key': 'value'
-            }
-        }
-        expected = '<root xmlns="https://api.ed2go.com"><key>value</key></root>'
-        self.assertEqual(self.xmlh.xml_from_dict(data), expected)
-
-    def test_clean_tag(self):
-        """Extracts the element tag."""
-        element = '{https://api.ed2go.com}TestElement'
-        expected = 'TestElement'
-        self.assertEqual(self.xmlh.clean_tag(element), expected)
-
-    def test_dict_from_xml(self):
-        """Correctly converts an XML element to a dict."""
-        xml_tree = ElementTree.fromstring('<root><key>value</key></root>')
-        expected = {'key': 'value'}
-        self.assertEqual(self.xmlh.dict_from_xml(xml_tree), expected)
-
-    def test_registration_response_data_from_xml(self):
-        """Correctly converts registration request response XML to a dictionary."""
-        expected = {'TestUser': 'tester'}
-        test_response_xml = '<?xml version="1.0" encoding="utf-8"?>' \
-            '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">' \
-            '<soap:Body>' \
-            '<GetRegistrationResponse xmlns="https://api.ed2go.com">' \
-            '<RegistrationsResponse>' \
-            '<Registrations>' \
-            '<Registration>' \
-            '<TestUser>' + expected['TestUser'] + '</TestUser>' \
-            '</Registration>' \
-            '</Registrations>' \
-            '</RegistrationsResponse>' \
-            '</GetRegistrationResponse>' \
-            '</soap:Body>' \
-            '</soap:Envelope>'
-
-        self.assertEqual(self.xmlh.registration_data_from_xml(test_response_xml), expected)
-
-    def test_completion_response_data_from_xml(self):
-        """Correctly converts completion report update request response XML to a dictionary."""
-        expected = {'Success': 'true'}
-        test_response_xml = '<?xml version="1.0" encoding="utf-8"?>' \
-            '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">' \
-            '<soap:Body>' \
-            '<UpdateCompletionReportResponse xmlns="https://api.ed2go.com">' \
-            '<Response>' \
-            '<Result>' \
-            '<Success>' + expected['Success'] + '</Success>' \
-            '</Result>' \
-            '</Response>' \
-            '</UpdateCompletionReportResponse>' \
-            '</soap:Body>' \
-            '</soap:Envelope>'
-
-        self.assertEqual(self.xmlh.completion_update_response_data_from_xml(test_response_xml), expected)
