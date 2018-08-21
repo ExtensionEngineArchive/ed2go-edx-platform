@@ -19,7 +19,7 @@ from openedx.core.djangoapps.content.course_structures.models import CourseStruc
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
 from student.models import CourseEnrollment
 
-from ed2go.constants import ENABLED_ED2GO_COMPLETION_REPORTING
+from ed2go import constants as c
 from ed2go.utils import XMLHandler, format_timedelta
 
 LOG = logging.getLogger(__name__)
@@ -171,9 +171,9 @@ class CompletionProfile(models.Model):
 
     def send_report(self):
         """Sends the generated completion report to the Ed2go completion report endpoint."""
-        if switch_is_active(ENABLED_ED2GO_COMPLETION_REPORTING):
+        if switch_is_active(c.ENABLED_ED2GO_COMPLETION_REPORTING):
             report = self.report
-            report['APIKey'] = settings.ED2GO_API_KEY
+            report[c.REP_API_KEY] = settings.ED2GO_API_KEY
             url = settings.ED2GO_REGISTRATION_SERVICE_URL
             xmlh = XMLHandler()
 
@@ -186,8 +186,8 @@ class CompletionProfile(models.Model):
                 return False
 
             response_data = xmlh.completion_update_response_data_from_xml(response.content)
-            if response_data['Success'] == 'false':
-                LOG.error(error_msg, str(response_data['Code']))
+            if response_data[c.RESP_SUCCESS] == 'false':
+                LOG.error(error_msg, str(response_data[c.RESP_CODE]))
             else:
                 self.reported = True
                 self.save()
@@ -212,13 +212,13 @@ class CompletionProfile(models.Model):
         ).first()
 
         return {
-            'RegistrationKey': self.registration_key,
-            'PercentProgress': round(self.progress * 100, 2),
-            'LastAccessDatetimeGMT': self.user.last_login.strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'CoursePassed': str(course_grade.passed).lower(),
-            'PercentOverallScore': course_grade.percent,
-            'CompletionDatetimeGMT': persistent_grade.passed_timestamp if persistent_grade else '',
-            'TimeSpent': format_timedelta(CourseSession.total_time(user=self.user, course_key=self.course_key)),
+            c.REP_REGISTRATION_KEY: self.registration_key,
+            c.REP_PERCENT_PROGRESS: round(self.progress * 100, 2),
+            c.REP_LAST_ACCESS_DT: self.user.last_login.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            c.REP_COURSE_PASSED: str(course_grade.passed).lower(),
+            c.REP_PERCENT_PROGRESS: course_grade.percent,
+            c.REP_COMPLETION_DT: persistent_grade.passed_timestamp if persistent_grade else '',
+            c.REP_TIME_SPENT: format_timedelta(CourseSession.total_time(user=self.user, course_key=self.course_key)),
         }
 
     @property
