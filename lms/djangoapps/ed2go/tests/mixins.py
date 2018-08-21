@@ -37,7 +37,7 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
         return CourseKey.from_string(course_str)
 
     @factory.django.mute_signals(signals.post_save)
-    def create_completion_profile(self, user=None, course_key=None, reg_key=None):
+    def create_completion_profile(self, user=None, course_key=None, reg_key=None, ref_id=None):
         """Create a new CompletionProfile instance.
 
         Args:
@@ -45,18 +45,21 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
             course_key (str): course key that will be converted to CourseKey instance and added
                 to the CompletionProfile instance.
             reg_key (str): registration key added to the CompletionProfile instance.
+            ref_id (int): reference ID added to the CompletionProfile instance.
 
         Returns:
             CompletionProfile instance.
         """
-        user = user if user else self.create_user()
+        user = user or self.create_user()
         course_key = CourseKey.from_string(course_key) if course_key else self.create_course_key()
-        reg_key = reg_key if reg_key else str(uuid.uuid4())
+        reg_key = reg_key or str(uuid.uuid4())
+        ref_id = ref_id or 123
 
         return CompletionProfile.objects.create(
             user=user,
             course_key=course_key,
-            registration_key=reg_key
+            registration_key=reg_key,
+            reference_id=ref_id
         )
 
     @factory.django.mute_signals(signals.post_save)

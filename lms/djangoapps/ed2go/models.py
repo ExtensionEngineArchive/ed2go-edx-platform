@@ -1,5 +1,7 @@
+import json
 import logging
 from datetime import timedelta
+from dateutil import parser
 
 import requests
 from django.conf import settings
@@ -9,6 +11,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timezone import now
 from jsonfield import JSONField
+from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locator import BlockUsageLocator
 from waffle import switch_is_active
 
@@ -17,10 +20,11 @@ from lms.djangoapps.grades.models import PersistentCourseGrade
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 from openedx.core.djangoapps.content.course_structures.models import CourseStructure
 from openedx.core.djangoapps.xmodule_django.models import CourseKeyField
-from student.models import CourseEnrollment
+from student.models import CourseEnrollment, UserProfile
 
 from ed2go import constants as c
-from ed2go.utils import format_timedelta
+from ed2go.exceptions import CompletionProfileAlreadyExists
+from ed2go.utils import format_timedelta, generate_username, get_registration_data
 from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
@@ -143,6 +147,7 @@ class CompletionProfile(models.Model):
     reported = models.BooleanField(default=False)
 
     registration_key = models.CharField(max_length=255, db_index=True, blank=True)
+    reference_id = models.IntegerField(blank=True, null=True)
     active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
@@ -156,18 +161,24 @@ class CompletionProfile(models.Model):
         else:
             super(CompletionProfile, self).save(*args, **kwargs)
 
+    def update_reference_id(self):
+        """Fetch and update the reference ID for this registration."""
+        registration_data = get_registration_data(self.registration_key)
+        self.reference_id = registration_data[c.REG_REFERENCE_ID]
+        self.save()
+
     def deactivate(self):
         """Unenroll the user prior to deactivating this instance."""
         update_enrollment(self.user, self.course_key, False)
         self.active = False
-        self.save()
+        self.update_reference_id()
         LOG.info('Deactivated course registration for user %s in course %s.', self.user, self.course_key)
 
     def activate(self):
         """Enroll the user and activate this instance."""
         update_enrollment(self.user, self.course_key, True)
         self.active = True
-        self.save()
+        self.update_reference_id()
         LOG.info('Activated course registration for user %s in course %s.', self.user, self.course_key)
 
     def send_report(self):
@@ -259,6 +270,69 @@ class CompletionProfile(models.Model):
         elif not videos:
             return problems_precent
         return 0.5 * problems_precent + 0.5 * videos_precent
+
+    @classmethod
+    def create(cls, registration_key):
+        """
+        Makes a request to the Ed2go GetRegistration endpoint using the provided
+        registration key and fetches or creates a new user and completion profile
+        based on the information received in the response.
+
+        Args:
+            registration_key (str): The registration key
+
+        Returns:
+            The new CompletionProfile instance
+
+        Raises:
+            CompletionProfileAlreadyExists: If an attempt was made to create an already
+            existing CompletionProfile instance
+        """
+        if cls.objects.filter(registration_key=registration_key).exists():
+            raise CompletionProfileAlreadyExists
+
+        registration_data = get_registration_data(registration_key)
+        student_data = registration_data[c.REG_STUDENT]
+        reference_id = registration_data[c.REG_REFERENCE_ID]
+
+        course_key_string = c.COURSE_KEY_TEMPLATE.format(
+            code=registration_data[c.REG_COURSE][c.REG_CODE]
+        )
+        course_key = CourseKey.from_string(course_key_string)
+
+        try:
+            user = User.objects.get(email=student_data[c.REG_EMAIL])
+            completion_profile = CompletionProfile.objects.create(
+                user=user,
+                registration_key=registration_key,
+                reference_id=reference_id,
+                course_key=course_key
+            )
+        except User.DoesNotExist:
+            user = User.objects.create(
+                first_name=student_data[c.REG_FIRST_NAME],
+                last_name=student_data[c.REG_LAST_NAME],
+                username=generate_username(student_data[c.REG_FIRST_NAME]),
+                email=student_data[c.REG_EMAIL],
+                is_active=True
+            )
+            UserProfile.objects.create(
+                user=user,
+                name=student_data[c.REG_FIRST_NAME] + ' ' + student_data[c.REG_LAST_NAME],
+                country=student_data[c.REG_COUNTRY],
+                year_of_birth=parser.parse(student_data[c.REG_BIRTHDATE]).year,
+                meta=json.dumps({
+                    'ReturnURL': registration_data[c.REG_RETURN_URL],
+                    'StudentKey': registration_data[c.REG_STUDENT][c.REG_STUDENT_KEY]
+                })
+            )
+            completion_profile = CompletionProfile.objects.create(
+                user=user,
+                registration_key=registration_key,
+                reference_id=reference_id,
+                course_key=course_key
+            )
+        return completion_profile
 
     @classmethod
     def mark_progress(cls, user, course_key, block_id):

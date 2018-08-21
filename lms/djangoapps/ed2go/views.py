@@ -19,7 +19,6 @@ from openedx.features.course_experience.utils import get_course_outline_block_tr
 from ed2go import constants as c
 from ed2go.discussions import get_forum_statistics
 from ed2go.models import CompletionProfile
-from ed2go.registration import get_or_create_user_completion_profile
 from ed2go.utils import request_valid
 
 LOG = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ class SSOView(View):
         At the end of this request there needs to be:
             * a user object corresponding with the registration data gathered
               from Ed2go registration service endpoint
-            * a new or updated CompletionProfile object
+            * a new CompletionProfile object if it didn't exist before
             * the user needs to be logged in
             * the user needs to be redirected to the course in corresponding
               CompletionProfile object.
@@ -85,10 +84,15 @@ class SSOView(View):
             return HttpResponse(msg, status=400)
 
         registration_key = request.POST[c.REGISTRATION_KEY]
-        user, completion_profile = get_or_create_user_completion_profile(registration_key)
+        try:
+            completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
+        except CompletionProfile.DoesNotExist:
+            completion_profile = CompletionProfile.create(registration_key)
 
+        user = completion_profile.user
         user.backend = settings.AUTHENTICATION_BACKENDS[0]
         login(request, user)
+
         return HttpResponseRedirect(
             reverse('course_root', kwargs={'course_id': completion_profile.course_key})
         )

@@ -47,6 +47,7 @@ REG_COUNTRY = 'Country'
 REG_RETURN_URL = 'ReturnURL'
 REG_BIRTHDATE = 'Birthdate'
 REG_STUDENT_KEY = 'StudentKey'
+REG_REFERENCE_ID = 'ReferenceID'
 
 # Report attributes
 REP_API_KEY = 'APIKey'

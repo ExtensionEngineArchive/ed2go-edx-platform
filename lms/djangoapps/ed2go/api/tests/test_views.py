@@ -26,15 +26,24 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
             response = ActionView().post(request)
         return response
 
-    @mock.patch('ed2go.api.views.get_or_create_user_completion_profile')
+    @mock.patch('ed2go.models.CompletionProfile.create')
     def test_new_registration(self, mocked_fn):
-        """Creating completion profile function is called."""
+        """Creating completion profile method is called."""
         completion_profile = self.create_completion_profile(user=self.user)
-        mocked_fn.return_value = (self.user, completion_profile)
+        mocked_fn.return_value = completion_profile
         response = self._make_request(c.NEW_REGISTRATION_ACTION)
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(mocked_fn.called)
+
+    def test_new_registration_rejected(self):
+        """Request is rejected because of already existing Completion Profile."""
+        completion_profile = self.create_completion_profile(user=self.user)
+        response = self._make_request(
+            action=c.NEW_REGISTRATION_ACTION,
+            reg_key=completion_profile.registration_key
+        )
+        self.assertEqual(response.status_code, 400)
 
     @mock.patch('ed2go.api.views.update_registration')
     def test_update_registration(self, mocked_fn):
@@ -44,17 +53,21 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(mocked_fn.called)
 
-    def test_cancel_registration(self):
+    @mock.patch('ed2go.models.CompletionProfile.deactivate')
+    def test_cancel_registration(self, mocked_fn):
         """Deactivates the completion profile."""
         reg_key = 'dummy-key'
-        completion_profile = self.create_completion_profile(user=self.user, reg_key=reg_key)
-        self.assertTrue(completion_profile.active)
+        mocked_fn.return_value = True
+        self.create_completion_profile(user=self.user, reg_key=reg_key)
 
         response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key=reg_key)
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(mocked_fn.called)
 
-        completion_profile.refresh_from_db()
-        self.assertFalse(completion_profile.active)
+    def test_cancel_invalid_registration(self):
+        """Cancel registration equest is rejected because of non-existing registration."""
+        response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key='invalid')
+        self.assertEqual(response.status_code, 404)
 
     def test_invalid_action(self):
         """Returns bad request response for invalid action."""

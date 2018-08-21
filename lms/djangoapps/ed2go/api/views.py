@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ed2go import constants as c
+from ed2go.exceptions import CompletionProfileAlreadyExists
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
-from ed2go.registration import get_or_create_user_completion_profile, update_registration
+from ed2go.registration import update_registration
 from ed2go.utils import request_valid
 
 
@@ -29,9 +30,16 @@ class ActionView(APIView):
         registration_key = request.data.get(c.REGISTRATION_KEY)
 
         if action == c.NEW_REGISTRATION_ACTION:
-            user, completion_profile = get_or_create_user_completion_profile(registration_key)
-            msg = 'User {user} created and enrolled into {course}.'.format(
-                user=user.username,
+            try:
+                completion_profile = CompletionProfile.create(registration_key)
+            except CompletionProfileAlreadyExists:
+                msg = 'Completion Profile already exists for registration key {reg_key}'.format(
+                    reg_key=registration_key
+                )
+                return Response(msg, status=400)
+
+            msg = 'Completion Profile created for user {user} and course {course}.'.format(
+                user=completion_profile.user.username,
                 course=completion_profile.course_key
             )
             return Response(msg, status=201)
@@ -39,7 +47,15 @@ class ActionView(APIView):
             user = update_registration(registration_key)
             msg = 'User {user} information updated.'.format(user=user.username)
         elif action == c.CANCEL_REGISTRATION_ACTION:
-            CompletionProfile.objects.get(registration_key=registration_key).deactivate()
+            try:
+                CompletionProfile.objects.get(registration_key=registration_key).deactivate()
+            except CompletionProfile.DoesNotExist:
+                return Response(
+                    'Completion Profile with registration key {reg_key} does not exist'.format(
+                        reg_key=registration_key
+                    ),
+                    status=404
+                )
             msg = 'Completion profile deactivated.'
         else:
             return Response('Action %s not supported.' % action, status=400)

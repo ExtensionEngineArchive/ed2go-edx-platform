@@ -198,6 +198,7 @@ def get_registration_data(reg_key):
 
     response = requests.post(url, data=request_data, headers=xmlh.headers)
     if response.status_code != 200:
+        # TODO: Raise custom exception instead
         return None
     return xmlh.registration_data_from_xml(response.content)
 
