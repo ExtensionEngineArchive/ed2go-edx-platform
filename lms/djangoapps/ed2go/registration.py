@@ -24,7 +24,7 @@ def update_registration(registration_key):
             from the Ed2go endpoint.
 
     Returns:
-        The user who was updated.
+        The completion profile.
     """
     registration_data = get_registration_data(registration_key)
     student_data = registration_data[c.REG_STUDENT]
@@ -48,4 +48,4 @@ def update_registration(registration_key):
     completion_profile.reference_id = registration_data[c.REG_REFERENCE_ID]
     completion_profile.save()
 
-    return user
+    return completion_profile

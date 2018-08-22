@@ -40,7 +40,7 @@ def send_completion_report():
 
         for obj in qs:
             report = obj.report
-            report[c.REP_API_KEY] = settings.ED2GO_API_KEY
+            report[c.REQ_API_KEY] = settings.ED2GO_API_KEY
             xml_data.append(
                 xmlh.xml_from_dict({c.REQ_UPDATE_COMPLETION_REPORT: report})
             )

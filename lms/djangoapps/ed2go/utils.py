@@ -191,7 +191,7 @@ def get_registration_data(reg_key):
     data = {
         c.REQ_GET_REGISTRATION: {
             c.REQ_API_KEY: api_key,
-            c.REQ_REGISTRATION_KEY: reg_key
+            c.REG_REGISTRATION_KEY: reg_key
         }
     }
     request_data = xmlh.request_data_from_dict(data)

@@ -48,9 +48,19 @@ REG_RETURN_URL = 'ReturnURL'
 REG_BIRTHDATE = 'Birthdate'
 REG_STUDENT_KEY = 'StudentKey'
 REG_REFERENCE_ID = 'ReferenceID'
+REG_REGISTRATION_KEY = 'RegistrationKey'
+REG_REGISTRATION_STATUS = 'RegistrationStatus'
+
+# Registration statuses
+REG_NEW_REGISTRATION_STATUS = 'NewRegistration'
+REG_REGISTRATION_PROCESSED_STATUS = 'RegistrationProcessed'
+REG_REGISTRATION_REJECTED_STATUS = 'RegistrationRejected'
+REG_CANCELLATION_PROCESSED_STATUS = 'CancellationProcessed'
+REG_CANCELLATION_REJECTED_STATUS = 'CancellationRejected'
+REG_UPDATE_PROCESSED_STATUS = 'UpdateProcessed'
+REG_UPDATE_REJECTED_STATUS = 'UpdateRejected'
 
 # Report attributes
-REP_API_KEY = 'APIKey'
 REP_REGISTRATION_KEY = 'RegistrationKey'
 REP_PERCENT_PROGRESS = 'PercentProgress'
 REP_LAST_ACCESS_DT = 'LastAccessDatetimeGMT'
@@ -64,11 +74,13 @@ RESP_UPDATE_COMPLETION_REPORT = 'UpdateCompletionReportResponse'
 # Response attributes
 RESP_SUCCESS = 'Success'
 RESP_CODE = 'Code'
+RESP_MESSAGE = 'Message'
 
 # Request names
 REQ_UPDATE_COMPLETION_REPORT = 'UpdateCompletionReport'
 REQ_GET_REGISTRATION = 'GetRegistration'
+REQ_UPDATE_REGISTRATION_STATUS = 'UpdateRegistrationStatus'
 
-# Request attributes
+# Request attibutes
 REQ_API_KEY = 'APIKey'
-REQ_REGISTRATION_KEY = 'RegistrationKey'
+REQ_NOTE = 'Note'
