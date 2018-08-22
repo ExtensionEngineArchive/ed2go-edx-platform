@@ -57,7 +57,7 @@ class CourseSession(models.Model):
     def _update_completion_profile(self):
         """Update the corresponding CompletionProfile to indicate that the session was updated."""
         profile, _ = CompletionProfile.objects.get_or_create(user=self.user, course_key=self.course_key)
-        profile.reported = False
+        profile.to_report = True
         profile.save()
 
     def save(self, *args, **kwargs):
@@ -143,8 +143,8 @@ class CompletionProfile(models.Model):
     course_key = CourseKeyField(max_length=255, db_index=True)
 
     # Indicates whether we need to send a report update for this completion profile.
-    # Should be set to False whenever course progress or session is updated.
-    reported = models.BooleanField(default=False)
+    # Should be set to True whenever course progress or session is updated.
+    to_report = models.BooleanField(default=False)
 
     registration_key = models.CharField(max_length=255, db_index=True, blank=True)
     reference_id = models.IntegerField(blank=True, null=True)
@@ -204,7 +204,7 @@ class CompletionProfile(models.Model):
             if response_data[c.RESP_SUCCESS] == 'false':
                 LOG.error(error_msg, str(response_data[c.RESP_CODE]))
             else:
-                self.reported = True
+                self.to_report = False
                 self.save()
                 LOG.info('Sent report for completion profile ID %d', self.id)
             return True
@@ -359,7 +359,7 @@ class CompletionProfile(models.Model):
             if unit:
                 unit['done'] = True
                 chapter.save()
-                profile.reported = False
+                profile.to_report = True
                 profile.save()
                 LOG.info(
                     'User [%s] progressed on unit [%s]',
