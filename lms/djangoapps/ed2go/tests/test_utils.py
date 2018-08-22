@@ -188,17 +188,17 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         path = '/test/path'
         method = 'GET'
         data = 'test: data'
-        origin = 'www.google.com'
+        referer = 'www.google.com'
 
         request = RequestFactory().get(path)
         request.data = data
-        request.META['HTTP_ORIGIN'] = origin
+        request.META['HTTP_REFERER'] = referer
 
         request_info = get_request_info(request)
-        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- ORIGIN: {origin}'.format(
+        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {referer}'.format(
             endpoint=path,
             method=method,
             data=str(data),
-            origin=origin
+            referer=referer
         )
         self.assertEqual(request_info, expected)
