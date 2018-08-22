@@ -1,6 +1,13 @@
+import logging
+
+LOG = logging.getLogger(__name__)
+
+
 class InvalidEd2goRequestError(Exception):
     """Raised when the SSO or Action request is invalid."""
-    pass
+    def __init__(self, message):
+        super(InvalidEd2goRequestError, self).__init__(message)
+        LOG.error(message)
 
 
 class CompletionProfileAlreadyExists(Exception):
