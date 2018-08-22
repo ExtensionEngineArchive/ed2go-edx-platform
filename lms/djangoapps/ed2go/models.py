@@ -308,6 +308,11 @@ class CompletionProfile(models.Model):
                 reference_id=reference_id,
                 course_key=course_key
             )
+            LOG.info(
+                'Created new Completion Profile [%s] for existing user %s',
+                completion_profile.registration_key,
+                user.username
+            )
         except User.DoesNotExist:
             user = User.objects.create(
                 first_name=student_data[c.REG_FIRST_NAME],
@@ -332,6 +337,11 @@ class CompletionProfile(models.Model):
                 reference_id=reference_id,
                 course_key=course_key
             )
+            LOG.info(
+                'Created new user [%s] and new Completion Profile [%s]',
+                user.username,
+                completion_profile.registration_key
+            )
         return completion_profile
 
     @classmethod
@@ -351,6 +361,11 @@ class CompletionProfile(models.Model):
                 chapter.save()
                 profile.reported = False
                 profile.save()
+                LOG.info(
+                    'User [%s] progressed on unit [%s]',
+                    user.username,
+                    block_id
+                )
                 return True
         return False
 
