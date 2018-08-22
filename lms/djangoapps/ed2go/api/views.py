@@ -11,7 +11,7 @@ from ed2go import constants as c
 from ed2go.exceptions import CompletionProfileAlreadyExists
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import update_registration
-from ed2go.utils import request_valid
+from ed2go.utils import get_request_info, request_valid
 from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
@@ -191,8 +191,10 @@ class ActionView(APIView):
             msg, status_code = self.cancel_registration_action_handler(registration_key)
         else:
             msg = 'Action {action} not supported.'.format(action=action)
+            request_info = get_request_info(request)
             status_code = 400
             LOG.error(msg)
+            LOG.info(request_info)
 
         return Response(msg, status=status_code)
 

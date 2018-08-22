@@ -89,10 +89,10 @@ def request_valid(request_data, request_type):
         bool: True if the received request_data is valid, False otherwise.
     """
     if request_expired(request_data):
-        LOG.info('Expired action request. Type: %s', request_type)
+        LOG.info('Expired action request. Type: %s -- Request data: %s', request_type, request_data)
         return (False, 'Request expired.')
     if not checksum_valid(request_data, request_type):
-        LOG.info('Invalid action request checksum. Type: %s', request_type)
+        LOG.info('Invalid action request checksum. Type: %s -- Request data: %s', request_type, request_data)
         return (False, 'Checksum invalid.')
     return (True, '')
 
@@ -295,3 +295,13 @@ def get_graded_chapters(course, student):
         chapter['perc_of_total'] = round(perc_of_total)
 
     return graded_chapters
+
+
+def get_request_info(request):
+    """Extract useful info from the request for debugging purposes."""
+    return 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- ORIGIN: {origin}'.format(
+        endpoint=request.META['PATH_INFO'],
+        method=request.method,
+        data=str(request.data),
+        origin=request.META['HTTP_ORIGIN'] if 'HTTP_ORIGIN' in request.META else 'none'
+    )
