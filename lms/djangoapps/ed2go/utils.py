@@ -299,9 +299,9 @@ def get_graded_chapters(course, student):
 
 def get_request_info(request):
     """Extract useful info from the request for debugging purposes."""
-    return 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- ORIGIN: {origin}'.format(
+    return 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {origin}'.format(
         endpoint=request.META['PATH_INFO'],
         method=request.method,
         data=str(request.data),
-        origin=request.META['HTTP_ORIGIN'] if 'HTTP_ORIGIN' in request.META else 'none'
+        origin=request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else 'none'
     )
