@@ -1,4 +1,3 @@
-import logging
 from datetime import timedelta
 
 import requests
@@ -35,7 +34,7 @@ def send_completion_report():
     Periodic task to send completion reports to ed2go.
     """
     if switch_is_active(c.ENABLED_ED2GO_COMPLETION_REPORTING):
-        qs = CompletionProfile.objects.filter(reported=False)  # pylint: disable=invalid-name
+        qs = CompletionProfile.objects.filter(to_report=True)  # pylint: disable=invalid-name
         xmlh = XMLHandler()
         xml_data = []
 

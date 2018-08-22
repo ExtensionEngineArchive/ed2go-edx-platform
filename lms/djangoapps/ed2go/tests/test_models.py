@@ -57,21 +57,21 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
 
     def test_update(self):
         """
-        CompletionProfile's reported set to False and
+        CompletionProfile's to_report set to True and
         last_activity_at updated when session is updated.
         """
         session = self.create_course_session(user=self.user)
         completion_profile = CompletionProfile.objects.first()
-        completion_profile.reported = True
+        completion_profile.to_report = False
         completion_profile.save()
-        self.assertTrue(completion_profile.reported)
+        self.assertFalse(completion_profile.to_report)
 
         tdelta = self.postpone_freeze_time()
         session.update()
 
         completion_profile.refresh_from_db()
         self.assertEqual(session.last_activity_at, tdelta)
-        self.assertFalse(completion_profile.reported)
+        self.assertTrue(completion_profile.to_report)
 
     @mock.patch('ed2go.models.CourseSession._update_completion_profile')
     def test_not_updated_when_inactive(self, mocked_fn):
