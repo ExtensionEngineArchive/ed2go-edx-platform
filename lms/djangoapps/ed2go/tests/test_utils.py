@@ -6,17 +6,19 @@ import mock
 import requests
 from django.conf import settings
 from django.test import TestCase
+from django.test.client import RequestFactory
 
 from ed2go import constants as c
 from ed2go.exceptions import InvalidEd2goRequestError
 from ed2go.tests.mixins import Ed2goTestMixin
 from ed2go.utils import (
+    checksum_valid,
     extract_course_id_from_url,
+    extract_problem_id,
     format_timedelta,
     generate_username,
     get_registration_data,
-    checksum_valid,
-    extract_problem_id,
+    get_request_info,
     request_expired,
     request_valid
 )
@@ -180,3 +182,23 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """If response is a non-200 status code, None should be returned."""
         request_mock.return_value = self._mock_post_request(status_code=400)
         self.assertIsNone(get_registration_data('dummy-reg-key'))
+
+    def test_get_request_info(self):
+        """The info should include all the necessary values."""
+        path = '/test/path'
+        method = 'GET'
+        data = 'test: data'
+        origin = 'www.google.com'
+
+        request = RequestFactory().get(path)
+        request.data = data
+        request.META['HTTP_ORIGIN'] = origin
+
+        request_info = get_request_info(request)
+        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- ORIGIN: {origin}'.format(
+            endpoint=path,
+            method=method,
+            data=str(data),
+            origin=origin
+        )
+        self.assertEqual(request_info, expected)
