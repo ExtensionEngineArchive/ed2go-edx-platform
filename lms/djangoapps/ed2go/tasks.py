@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import requests
 from celery import task
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.timezone import now
 from waffle import switch_is_active
@@ -11,7 +12,7 @@ from ed2go import constants as c
 from ed2go.models import CompletionProfile, CourseSession
 from ed2go.xml_handler import XMLHandler
 
-LOG = logging.getLogger(__name__)
+LOG = get_task_logger(__name__)
 THRESHOLD = timedelta(seconds=settings.ED2GO_SESSION_INACTIVITY_THRESHOLD)
 
 
