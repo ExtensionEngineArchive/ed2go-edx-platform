@@ -145,27 +145,15 @@ class CourseSessionTests(Ed2goTestMixin, TestCase):
 
 
 class CompletionProfileTests(Ed2goTestMixin, TestCase):
-    YEAR_OF_BIRTH = 1990
-    REGISTRATION_KEY = 'reg-key'
-    REGISTRATION_DATA = {
-        c.REG_REFERENCE_ID: 123,
-        c.REG_STUDENT: {
-            c.REG_FIRST_NAME: 'tester',
-            c.REG_LAST_NAME: 'last-name',
-            c.REG_EMAIL: 'tester@example.com',
-            c.REG_COUNTRY: 'US',
-            c.REG_BIRTHDATE: '{}-01-01T08:00:00Z'.format(YEAR_OF_BIRTH),
-            c.REG_STUDENT_KEY: '60accf5f-51f1-4a73-8b70-9654a00ce4ab'
-        },
-        c.REG_COURSE: {
-            c.REG_CODE: 'DEV123x+2018_T2'
-        },
-        c.REG_RETURN_URL: 'www.example.com'
-    }
-
     def setUp(self):
+        self.registration_key = 'dummy-key'
+        self.year_of_birth = 1990
+        self.registration_data = self.get_mocked_registration_data(
+            reg_key=self.registration_key,
+            year_of_birth=self.year_of_birth
+        )
         self.user = self.create_user(
-            email=self.REGISTRATION_DATA[c.REG_STUDENT][c.REG_EMAIL]
+            email=self.registration_data[c.REG_STUDENT][c.REG_EMAIL]
         )
         self.course = self.create_course()
         self.course_key = self.course.id
@@ -242,52 +230,73 @@ class CompletionProfileTests(Ed2goTestMixin, TestCase):
 
     def assert_completion_profile(self, completion_profile, user):
         self.assertEqual(completion_profile.user, user)
-        self.assertEqual(completion_profile.registration_key, self.REGISTRATION_KEY)
+        self.assertEqual(completion_profile.registration_key, self.registration_key)
         self.assertEqual(str(completion_profile.course_key), c.COURSE_KEY_TEMPLATE.format(
-            code=self.REGISTRATION_DATA[c.REG_COURSE][c.REG_CODE]
+            code=self.registration_data[c.REG_COURSE][c.REG_CODE]
         ))
 
     @factory.django.mute_signals(signals.post_save)
     @mock.patch('ed2go.models.get_registration_data')
     def test_create_user_completion_profile(self, mocked_fn):
         """Creates new user and completion profile."""
-        mocked_fn.return_value = self.REGISTRATION_DATA
+        mocked_fn.return_value = self.registration_data
         self.user.delete()
         self.assert_object_count(completion_profile_count=0, user_count=0)
 
-        completion_profile = CompletionProfile.create(self.REGISTRATION_KEY)
+        completion_profile = CompletionProfile.create_from_key(self.registration_key)
         user = completion_profile.user
         self.assert_completion_profile(completion_profile, user)
         self.assert_object_count(completion_profile_count=1, user_count=1)
 
-        student_data = self.REGISTRATION_DATA[c.REG_STUDENT]
+        student_data = self.registration_data[c.REG_STUDENT]
         self.assertEqual(user.profile.name, student_data[c.REG_FIRST_NAME] + ' ' + student_data[c.REG_LAST_NAME])
         self.assertEqual(user.profile.country, student_data[c.REG_COUNTRY])
-        self.assertEqual(user.profile.year_of_birth, self.YEAR_OF_BIRTH)
-        self.assertEqual(user.profile.get_meta()['ReturnURL'], self.REGISTRATION_DATA[c.REG_RETURN_URL])
+        self.assertEqual(user.profile.year_of_birth, self.year_of_birth)
+        self.assertEqual(user.profile.get_meta()['ReturnURL'], self.registration_data[c.REG_RETURN_URL])
         self.assertEqual(
             user.profile.get_meta()['StudentKey'],
-            self.REGISTRATION_DATA[c.REG_STUDENT][c.REG_STUDENT_KEY]
+            self.registration_data[c.REG_STUDENT][c.REG_STUDENT_KEY]
         )
+        self.assertTrue(mocked_fn.called)
 
     @factory.django.mute_signals(signals.post_save)
     @mock.patch('ed2go.models.get_registration_data')
     def test_create_existing_user(self, mocked_fn):
         """Creates new completion profile with existing user."""
-        mocked_fn.return_value = self.REGISTRATION_DATA
+        mocked_fn.return_value = self.registration_data
         self.assert_object_count(completion_profile_count=0, user_count=1)
 
-        completion_profile = CompletionProfile.create(self.REGISTRATION_KEY)
+        completion_profile = CompletionProfile.create_from_key(self.registration_key)
         self.assert_completion_profile(completion_profile, self.user)
         self.assert_object_count(completion_profile_count=1, user_count=1)
+        self.assertTrue(mocked_fn.called)
 
     def test_create_existing_completion_profile(self):
         """Exception is raised when trying to create existing Completion Profile."""
-        self.create_completion_profile(reg_key=self.REGISTRATION_KEY)
+        self.create_completion_profile(reg_key=self.registration_key)
         self.assert_object_count(completion_profile_count=1, user_count=1)
 
         with self.assertRaises(CompletionProfileAlreadyExists):
-            CompletionProfile.create(self.REGISTRATION_KEY)
+            CompletionProfile.create_from_key(self.registration_key)
+        self.assert_object_count(completion_profile_count=1, user_count=1)
+
+    @factory.django.mute_signals(signals.post_save)
+    @mock.patch('ed2go.models.get_registration_data')
+    def test_create_new_completion_profile_from_data(self, mocked_fn):
+        self.assert_object_count(completion_profile_count=0, user_count=1)
+        completion_profile = CompletionProfile.create_from_data(self.registration_data)
+
+        self.assert_completion_profile(completion_profile, self.user)
+        self.assert_object_count(completion_profile_count=1, user_count=1)
+        self.assertFalse(mocked_fn.called)
+
+    def test_create_existing_completion_profile_from_data(self):
+        """Exception is raised when trying to create existing Completion Profile."""
+        self.create_completion_profile(reg_key=self.registration_key)
+        self.assert_object_count(completion_profile_count=1, user_count=1)
+
+        with self.assertRaises(CompletionProfileAlreadyExists):
+            CompletionProfile.create_from_data(self.registration_data)
         self.assert_object_count(completion_profile_count=1, user_count=1)
 
 

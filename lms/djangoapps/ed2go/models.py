@@ -272,28 +272,21 @@ class CompletionProfile(models.Model):
         return 0.5 * problems_precent + 0.5 * videos_precent
 
     @classmethod
-    def create(cls, registration_key):
+    def _create(cls, registration_data):
         """
-        Makes a request to the Ed2go GetRegistration endpoint using the provided
-        registration key and fetches or creates a new user and completion profile
-        based on the information received in the response.
+        Fetches or creates a new user and completion profile
+        based on passed in registration data.
 
         Args:
-            registration_key (str): The registration key
+            registration_data (dict): The registration data fetched from the GetRegistration
+                                      API endpoint in dictionary format.
 
         Returns:
             The new CompletionProfile instance
-
-        Raises:
-            CompletionProfileAlreadyExists: If an attempt was made to create an already
-            existing CompletionProfile instance
         """
-        if cls.objects.filter(registration_key=registration_key).exists():
-            raise CompletionProfileAlreadyExists
-
-        registration_data = get_registration_data(registration_key)
         student_data = registration_data[c.REG_STUDENT]
         reference_id = registration_data[c.REG_REFERENCE_ID]
+        registration_key = registration_data[c.REG_REGISTRATION_KEY]
 
         course_key_string = c.COURSE_KEY_TEMPLATE.format(
             code=registration_data[c.REG_COURSE][c.REG_CODE]
@@ -343,6 +336,51 @@ class CompletionProfile(models.Model):
                 completion_profile.registration_key
             )
         return completion_profile
+
+    @classmethod
+    def create_from_key(cls, registration_key):
+        """
+        Wrapper for the _create() method. Makes a request to the
+        Ed2go GetRegistration endpoint using the provided registration
+        key and fetches or creates a new user and completion profile.
+
+        Args:
+            registration_key (str): The registration key
+
+        Returns:
+            The new CompletionProfile instance
+
+        Raises:
+            CompletionProfileAlreadyExists: If an attempt was made to create an already
+            existing CompletionProfile instance
+        """
+        if cls.objects.filter(registration_key=registration_key).exists():
+            raise CompletionProfileAlreadyExists
+
+        registration_data = get_registration_data(registration_key)
+        return CompletionProfile._create(registration_data)
+
+    @classmethod
+    def create_from_data(cls, registration_data):
+        """
+        Wrapper for the _create() method. Uses the passed in registration data
+        and fetches or creates a new user and completion profile.
+
+        Args:
+            registration_data (dict): The registration data fetched from the GetRegistration
+                                      API endpoint in dictionary format.
+
+        Returns:
+            The new CompletionProfile instance
+
+        Raises:
+            CompletionProfileAlreadyExists: If an attempt was made to create an already
+            existing CompletionProfile instance
+        """
+        registration_key = registration_data[c.REG_REGISTRATION_KEY]
+        if cls.objects.filter(registration_key=registration_key).exists():
+            raise CompletionProfileAlreadyExists
+        return CompletionProfile._create(registration_data)
 
     @classmethod
     def mark_progress(cls, user, course_key, block_id):

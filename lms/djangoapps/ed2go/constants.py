@@ -3,7 +3,7 @@
 SSO_REQUEST = 'sso_request'
 ACTION_REQUEST = 'action_request'
 
-# Request parameter names
+# Incoming request parameter names
 CHECKSUM = 'Checksum'
 ACTION = 'Action'
 REGISTRATION_KEY = 'RegistrationKey'
@@ -30,6 +30,7 @@ ENABLED_ED2GO_COMPLETION_REPORTING = 'Completion reporting task'
 REDIRECT_ANONYMOUS_TO_ED2GO_LOGIN = 'redirect_anonymous_edgo_login'
 
 # Action names
+GET_REGISTRATION_ACTION = 'GetRegistration'
 NEW_REGISTRATION_ACTION = 'NewRegistration'
 UPDATE_REGISTRATION_ACTION = 'UpdateRegistration'
 CANCEL_REGISTRATION_ACTION = 'CancelRegistration'
@@ -37,6 +38,7 @@ CANCEL_REGISTRATION_ACTION = 'CancelRegistration'
 COURSE_KEY_TEMPLATE = 'course-v1:Microsoft+{code}'
 
 # Registration attributes
+REG_ACTION = 'Action'
 REG_COURSE = 'Course'
 REG_CODE = 'Code'
 REG_STUDENT = 'Student'

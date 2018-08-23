@@ -16,23 +16,37 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
 
     def setUp(self):
         self.user = self.create_user()
+        self.registration_key = 'reg-key'
+        self.registration_data = self.get_mocked_registration_data(reg_key=self.registration_key)
 
-    def _make_request(self, action, reg_key='dummy-key', valid_request=True):
+    def _make_request(self, action=c.GET_REGISTRATION_ACTION, reg_key='dummy-key', valid_request=True):
         request = Request(APIRequestFactory().post(
             self.url,
             {c.ACTION: action, c.REGISTRATION_KEY: reg_key}
         ))
-        with mock.patch('ed2go.api.views.request_valid', return_value=(valid_request, '')):
+        with mock.patch('ed2go.api.views.request_valid', return_value=(valid_request, '')), \
+                mock.patch('ed2go.api.views.get_registration_data', return_value=self.registration_data):
             response = ActionView().post(request)
         return response
 
+    def test_invalid_request(self):
+        """Returns bad request response for invalid request."""
+        response = self._make_request('InvalidRequest', valid_request=False)
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_action(self):
+        """Request is rejected because of invalid action."""
+        response = self._make_request(action='invalid-action')
+        self.assertEqual(response.status_code, 400)
+
     @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
-    @mock.patch('ed2go.models.CompletionProfile.create')
+    @mock.patch('ed2go.models.CompletionProfile.create_from_data')
     def test_new_registration(self, create_mock, update_mock):
         """Creating completion profile method is called."""
         completion_profile = self.create_completion_profile(user=self.user)
         create_mock.return_value = completion_profile
-        response = self._make_request(c.NEW_REGISTRATION_ACTION)
+        self.registration_data[c.ACTION] = c.NEW_REGISTRATION_ACTION
+        response = self._make_request()
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(create_mock.called)
@@ -43,11 +57,10 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
     @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
     def test_new_registration_rejected(self, update_mock):
         """Request is rejected because of already existing Completion Profile."""
-        completion_profile = self.create_completion_profile(user=self.user)
-        response = self._make_request(
-            c.NEW_REGISTRATION_ACTION,
-            reg_key=completion_profile.registration_key
-        )
+        completion_profile = self.create_completion_profile(user=self.user, reg_key=self.registration_key)
+        self.registration_data[c.ACTION] = c.NEW_REGISTRATION_ACTION
+        response = self._make_request(reg_key=completion_profile.registration_key)
+
         self.assertEqual(response.status_code, 400)
         self.assertTrue(update_mock.called)
         _, kwargs = update_mock.call_args
@@ -59,7 +72,8 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         """Updating completion profile function is called."""
         completion_profile = self.create_completion_profile(user=self.user)
         update_reg_mock.return_value = completion_profile
-        response = self._make_request(c.UPDATE_REGISTRATION_ACTION)
+        self.registration_data[c.ACTION] = c.UPDATE_REGISTRATION_ACTION
+        response = self._make_request()
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(update_reg_mock.called)
@@ -74,8 +88,9 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         reg_key = 'dummy-key'
         deactivate_mock.return_value = True
         self.create_completion_profile(user=self.user, reg_key=reg_key)
+        self.registration_data[c.ACTION] = c.CANCEL_REGISTRATION_ACTION
+        response = self._make_request(reg_key=reg_key)
 
-        response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key=reg_key)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(deactivate_mock.called)
         self.assertTrue(update_mock.called)
@@ -84,17 +99,14 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
 
     def test_cancel_invalid_registration(self):
         """Cancel registration request is rejected because of non-existing registration."""
-        response = self._make_request(c.CANCEL_REGISTRATION_ACTION, reg_key='invalid')
+        self.registration_data[c.ACTION] = c.CANCEL_REGISTRATION_ACTION
+        response = self._make_request(reg_key='invalid')
         self.assertEqual(response.status_code, 404)
 
-    def test_invalid_action(self):
-        """Returns bad request response for invalid action."""
-        response = self._make_request('InvalidAction')
-        self.assertEqual(response.status_code, 400)
-
-    def test_invalid_request(self):
-        """Returns bad request response for invalid request."""
-        response = self._make_request('InvalidRequest', valid_request=False)
+    def test_invalid_registration_action(self):
+        """Request is rejected if the registration action is not supported."""
+        self.registration_data[c.ACTION] = 'InvalidAction'
+        response = self._make_request()
         self.assertEqual(response.status_code, 400)
 
 

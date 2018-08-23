@@ -11,7 +11,7 @@ from ed2go import constants as c
 from ed2go.exceptions import CompletionProfileAlreadyExists
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import update_registration
-from ed2go.utils import get_request_info, request_valid
+from ed2go.utils import get_registration_data, get_request_info, request_valid
 from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
@@ -68,22 +68,24 @@ class ActionView(APIView):
             else:
                 LOG.info('%s request processed!', c.REQ_UPDATE_REGISTRATION_STATUS)
 
-    def new_registration_action_handler(self, registration_key):
+    def new_registration_action_handler(self, registration_data):
         """
         Handles the NewRegistration action requests.
         Creates a new CompletionProfile based on the data fetched from ed2go API
         via the passed in registration_key value.
 
         Args:
-            registration_key (str): the registration key
+            registration_data (dict): The fetched registration data.
 
         Returns:
             - response message
             - response status code - 201 if created, 400 if profile already exists
         """
+        registration_key = registration_data[c.REG_REGISTRATION_KEY]
         try:
-            completion_profile = CompletionProfile.create(registration_key)
+            completion_profile = CompletionProfile.create_from_data(registration_data)
         except CompletionProfileAlreadyExists:
+            registration_key = registration_data[c.REG_REGISTRATION_KEY]
             completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
             msg = 'Completion Profile already exists for registration key {reg_key}'.format(
                 reg_key=registration_key
@@ -109,24 +111,24 @@ class ActionView(APIView):
         )
         return msg, 201
 
-    def update_registration_action_handler(self, registration_key):
+    def update_registration_action_handler(self, registration_data):
         """
         Handles the UpdateRegistration action requests.
         Updates the user information based on the data fetched from ed2go API
         via the passed in registration_key value.
 
         Args:
-            registration_key (str): the registration key
+            registration_data (dict): The fetched registration data.
 
         Returns:
             - response message
             - response status code - 200 for successful update
         """
-        completion_profile = update_registration(registration_key)
+        completion_profile = update_registration(registration_data)
         msg = 'User {user} information updated.'.format(user=completion_profile.user.username)
         LOG.info(msg)
         self.update_registration_status_request(
-            reg_key=registration_key,
+            reg_key=completion_profile.registration_key,
             ref_id=completion_profile.reference_id,
             status=c.REG_UPDATE_PROCESSED_STATUS
         )
@@ -181,16 +183,25 @@ class ActionView(APIView):
             return Response(msg, status=400)
 
         action = request.data.get(c.ACTION)
-        registration_key = request.data.get(c.REGISTRATION_KEY)
+        if action != c.GET_REGISTRATION_ACTION:
+            msg = 'Action {action} not supported.'.format(action=action)
+            request_info = get_request_info(request)
+            LOG.error(msg)
+            LOG.info(request_info)
+            return Response(msg, status=400)
 
-        if action == c.NEW_REGISTRATION_ACTION:
-            msg, status_code = self.new_registration_action_handler(registration_key)
-        elif action == c.UPDATE_REGISTRATION_ACTION:
-            msg, status_code = self.update_registration_action_handler(registration_key)
-        elif action == c.CANCEL_REGISTRATION_ACTION:
+        registration_key = request.data.get(c.REGISTRATION_KEY)
+        registration_data = get_registration_data(registration_key)
+        registration_action = registration_data[c.REG_ACTION]
+
+        if registration_action == c.NEW_REGISTRATION_ACTION:
+            msg, status_code = self.new_registration_action_handler(registration_data)
+        elif registration_action == c.UPDATE_REGISTRATION_ACTION:
+            msg, status_code = self.update_registration_action_handler(registration_data)
+        elif registration_action == c.CANCEL_REGISTRATION_ACTION:
             msg, status_code = self.cancel_registration_action_handler(registration_key)
         else:
-            msg = 'Action {action} not supported.'.format(action=action)
+            msg = 'Registration action {action} not supported.'.format(action=registration_action)
             request_info = get_request_info(request)
             status_code = 400
             LOG.error(msg)
