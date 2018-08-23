@@ -82,7 +82,7 @@ class ActionView(APIView):
             - response status code - 201 if created, 400 if profile already exists
         """
         try:
-            completion_profile = CompletionProfile.create(registration_key)
+            completion_profile = CompletionProfile.create_from_key(registration_key)
         except CompletionProfileAlreadyExists:
             completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
             msg = 'Completion Profile already exists for registration key {reg_key}'.format(

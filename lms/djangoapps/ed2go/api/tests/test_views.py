@@ -27,7 +27,7 @@ class ActionViewTests(Ed2goTestMixin, TestCase):
         return response
 
     @mock.patch('ed2go.api.views.ActionView.update_registration_status_request')
-    @mock.patch('ed2go.models.CompletionProfile.create')
+    @mock.patch('ed2go.models.CompletionProfile.create_from_key')
     def test_new_registration(self, create_mock, update_mock):
         """Creating completion profile method is called."""
         completion_profile = self.create_completion_profile(user=self.user)

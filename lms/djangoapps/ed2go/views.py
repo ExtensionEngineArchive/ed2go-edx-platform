@@ -87,7 +87,7 @@ class SSOView(View):
         try:
             completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
         except CompletionProfile.DoesNotExist:
-            completion_profile = CompletionProfile.create(registration_key)
+            completion_profile = CompletionProfile.create_from_key(registration_key)
 
         user = completion_profile.user
         user.backend = settings.AUTHENTICATION_BACKENDS[0]
