@@ -4,11 +4,10 @@ from django.contrib.auth.models import User
 from student.models import UserProfile
 
 from ed2go import constants as c
-from ed2go.utils import get_registration_data
 from ed2go.models import CompletionProfile
 
 
-def update_registration(registration_key):
+def update_registration(registration_data):
     """
     Update the user information:
         * name
@@ -20,13 +19,11 @@ def update_registration(registration_key):
     Update the reference ID in the Completion Profile.
 
     Args:
-        registration_key (str): The registration key with which data is fetched
-            from the Ed2go endpoint.
+        registration_data (dict): The registration data from ed2go.
 
     Returns:
         The completion profile.
     """
-    registration_data = get_registration_data(registration_key)
     student_data = registration_data[c.REG_STUDENT]
     user = User.objects.get(email=student_data[c.REG_EMAIL])
 
@@ -44,6 +41,7 @@ def update_registration(registration_key):
     profile.set_meta(meta)
     profile.save()
 
+    registration_key = registration_data[c.REG_REGISTRATION_KEY]
     completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
     completion_profile.reference_id = registration_data[c.REG_REFERENCE_ID]
     completion_profile.save()
