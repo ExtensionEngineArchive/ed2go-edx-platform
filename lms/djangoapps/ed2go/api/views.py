@@ -68,6 +68,43 @@ class ActionView(APIView):
             else:
                 LOG.info('%s request processed!', c.REQ_UPDATE_REGISTRATION_STATUS)
 
+    def handle_broad_exception(self, action, reg_key, ref_id, exception):
+        """
+        Handles the action request process' catch-all exception(s) by logging the exception
+        and sending an appropriate rejection status update to ed2go.
+
+        Args:
+            action (str): Name of the action
+            reg_key (str): Registration key of the processed registration
+            ref_id (int): Reference ID of the registration status
+            exception (Exception): The caught exception
+
+        Returns:
+            The appropriate message explaining the exception.
+        """
+        msg = 'An error happened trying to process the {action} action request [{reg_key}]'.format(
+            action=action,
+            reg_key=reg_key
+        )
+        LOG.exception(msg)
+
+        if action == c.NEW_REGISTRATION_ACTION:
+            status = c.REG_REGISTRATION_REJECTED_STATUS
+        elif action == c.UPDATE_REGISTRATION_ACTION:
+            status = c.REG_UPDATE_REJECTED_STATUS
+        elif action == c.CANCEL_REGISTRATION_ACTION:
+            status = c.REG_CANCELLATION_REJECTED_STATUS
+        else:
+            raise Exception('Unsupported action {action}'.format(action=action))
+
+        self.update_registration_status_request(
+            reg_key=reg_key,
+            ref_id=ref_id,
+            status=status,
+            note='{msg}: {err}'.format(msg=msg, err=exception.message)
+        )
+        return msg
+
     def new_registration_action_handler(self, registration_data):
         """
         Handles the NewRegistration action requests.
@@ -82,21 +119,24 @@ class ActionView(APIView):
             - response status code - 201 if created, 400 if profile already exists
         """
         registration_key = registration_data[c.REG_REGISTRATION_KEY]
+        reference_id = registration_data[c.REG_REFERENCE_ID]
+
         try:
             completion_profile = CompletionProfile.create_from_data(registration_data)
         except CompletionProfileAlreadyExists:
-            registration_key = registration_data[c.REG_REGISTRATION_KEY]
-            completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
             msg = 'Completion Profile already exists for registration key {reg_key}'.format(
                 reg_key=registration_key
             )
             LOG.error(msg)
             self.update_registration_status_request(
                 reg_key=registration_key,
-                ref_id=completion_profile.reference_id,
+                ref_id=reference_id,
                 status=c.REG_REGISTRATION_REJECTED_STATUS,
                 note='Registration already exists in the system'
             )
+            return msg, 400
+        except Exception as e:  # pylint: disable=broad-except
+            msg = self.handle_broad_exception(c.NEW_REGISTRATION_ACTION, registration_key, reference_id, e)
             return msg, 400
 
         msg = 'Completion Profile created for user {user} and course {course}.'.format(
@@ -124,48 +164,66 @@ class ActionView(APIView):
             - response message
             - response status code - 200 for successful update
         """
-        completion_profile = update_registration(registration_data)
-        msg = 'User {user} information updated.'.format(user=completion_profile.user.username)
-        LOG.info(msg)
-        self.update_registration_status_request(
-            reg_key=completion_profile.registration_key,
-            ref_id=completion_profile.reference_id,
-            status=c.REG_UPDATE_PROCESSED_STATUS
-        )
-        return msg, 200
+        registration_key = registration_data[c.REG_REGISTRATION_KEY]
+        reference_id = registration_data[c.REG_REFERENCE_ID]
 
-    def cancel_registration_action_handler(self, registration_key):
+        try:
+            completion_profile = update_registration(registration_data)
+            msg = 'User {user} information updated.'.format(user=completion_profile.user.username)
+            LOG.info(msg)
+            self.update_registration_status_request(
+                reg_key=registration_key,
+                ref_id=reference_id,
+                status=c.REG_UPDATE_PROCESSED_STATUS
+            )
+            return msg, 200
+        except Exception as e:  # pylint: disable=broad-except
+            msg = self.handle_broad_exception(c.UPDATE_REGISTRATION_ACTION, registration_key, reference_id, e)
+            return msg, 400
+
+    def cancel_registration_action_handler(self, registration_data):
         """
         Handles the CancelRegistration action requests.
         Deactivates the Completion Profile specified by the passed in registration_key value.
 
         Args:
-            registration_key (str): the registration key
+            registration_data (dict): The fetched registration data.
 
         Returns:
             - response message
             - response status code - 200 for successful deactivation, 404 if can't find
                                      the completion profile based on the registration_key
         """
+        registration_key = registration_data[c.REG_REGISTRATION_KEY]
+        reference_id = registration_data[c.REG_REFERENCE_ID]
+
         try:
             completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
             completion_profile.deactivate()
+
+            msg = 'Completion profile with registration key [{}] deactivated.'.format(registration_key)
+            LOG.info(msg)
+
+            self.update_registration_status_request(
+                reg_key=registration_key,
+                ref_id=reference_id,
+                status=c.REG_CANCELLATION_PROCESSED_STATUS
+            )
+            return msg, 200
         except CompletionProfile.DoesNotExist:
             msg = 'Completion Profile with registration key {reg_key} does not exist'.format(
                 reg_key=registration_key
             )
             LOG.error(msg)
+            self.update_registration_status_request(
+                reg_key=registration_key,
+                ref_id=reference_id,
+                status=c.REG_CANCELLATION_REJECTED_STATUS
+            )
             return msg, 404
-
-        msg = 'Completion profile with registration key [{}] deactivated.'.format(registration_key)
-        LOG.info(msg)
-
-        self.update_registration_status_request(
-            reg_key=registration_key,
-            ref_id=completion_profile.reference_id,
-            status=c.REG_CANCELLATION_PROCESSED_STATUS
-        )
-        return msg, 200
+        except Exception as e:  # pylint: disable=broad-except
+            msg = self.handle_broad_exception(c.UPDATE_REGISTRATION_ACTION, registration_key, reference_id, e)
+            return msg, 400
 
     def post(self, request):
         """
@@ -199,7 +257,7 @@ class ActionView(APIView):
         elif registration_action == c.UPDATE_REGISTRATION_ACTION:
             msg, status_code = self.update_registration_action_handler(registration_data)
         elif registration_action == c.CANCEL_REGISTRATION_ACTION:
-            msg, status_code = self.cancel_registration_action_handler(registration_key)
+            msg, status_code = self.cancel_registration_action_handler(registration_data)
         else:
             msg = 'Registration action {action} not supported.'.format(action=registration_action)
             request_info = get_request_info(request)
