@@ -37,3 +37,20 @@
     }
   }
 }
+
+body.discussion {
+  aside {
+    &.forum-nav {
+      height: 100%!important;
+    }
+
+    ul#discussion_topics_listbox {
+      height: 100%!important;
+    }
+  }
+
+  #main {
+    margin-top: 50px;
+    overflow-x: scroll;
+  }
+}
