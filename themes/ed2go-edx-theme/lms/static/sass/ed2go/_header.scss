@@ -8,13 +8,13 @@
   height: 60px!important;
 
   @include media($tablet-large) {
-    height: auto;
+    height: auto!important;
   }
 
   .wrapper-header {
     padding: 2px 0 0 0;
     @include media($tablet-large) {
-      height: auto;
+      height: auto!important;;
     }
   }
 
