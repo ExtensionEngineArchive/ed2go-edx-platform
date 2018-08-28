@@ -20,7 +20,8 @@ from ed2go.utils import (
     get_registration_data,
     get_request_info,
     request_expired,
-    request_valid
+    request_valid,
+    escape_xml_string
 )
 from ed2go.xml_handler import XMLHandler
 
@@ -195,10 +196,20 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         request.META['HTTP_REFERER'] = referer
 
         request_info = get_request_info(request)
-        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {referer}'.format(
+        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {referer}'.format(  # pylint: disable=line-too-long
             endpoint=path,
             method=method,
             data=str(data),
             referer=referer
         )
         self.assertEqual(request_info, expected)
+
+    @ddt.data(
+        ('test <string>', 'test &lt;string&gt;'),
+        ('test string', 'test string')
+    )
+    @ddt.unpack
+    def test_escape_xml_string(self, string, expected):
+        """XML characters should be escaped."""
+        result = escape_xml_string(string)
+        self.assertEqual(result, expected)

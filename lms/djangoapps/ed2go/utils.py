@@ -305,3 +305,8 @@ def get_request_info(request):
         data=str(request.data),
         origin=request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else 'none'
     )
+
+
+def escape_xml_string(string):
+    """Escape not allowed XML characters."""
+    return string.replace('<', '&lt;').replace('>', '&gt;')
