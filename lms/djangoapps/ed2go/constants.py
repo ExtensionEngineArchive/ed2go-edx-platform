@@ -72,6 +72,7 @@ REP_TIME_SPENT = 'TimeSpent'
 
 # Response names
 RESP_UPDATE_COMPLETION_REPORT = 'UpdateCompletionReportResponse'
+RESP_UPDATE_REGISTRATION_STATUS = 'UpdateRegistrationStatusResponse'
 
 # Response attributes
 RESP_SUCCESS = 'Success'
