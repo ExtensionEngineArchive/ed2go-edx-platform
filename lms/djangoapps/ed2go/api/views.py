@@ -11,7 +11,7 @@ from ed2go import constants as c
 from ed2go.exceptions import CompletionProfileAlreadyExists
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 from ed2go.registration import update_registration
-from ed2go.utils import get_registration_data, get_request_info, request_valid
+from ed2go.utils import escape_xml_string, get_registration_data, get_request_info, request_valid
 from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class ActionView(APIView):
             }
         }
         if note:
-            data[c.REQ_UPDATE_REGISTRATION_STATUS][c.REQ_NOTE] = note
+            data[c.REQ_UPDATE_REGISTRATION_STATUS][c.REQ_NOTE] = escape_xml_string(note)
 
         request_data = xmlh.request_data_from_dict(data)
         response = requests.post(
