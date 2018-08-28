@@ -56,7 +56,7 @@ class ActionView(APIView):
             )
         else:
             response_data = xmlh.get_response_data_from_xml(
-                action_name=c.REQ_UPDATE_REGISTRATION_STATUS,
+                response_name=c.RESP_UPDATE_REGISTRATION_STATUS,
                 xml=response.content
             )
             if response_data[c.RESP_SUCCESS] == 'false':
