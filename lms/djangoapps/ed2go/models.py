@@ -314,11 +314,14 @@ class CompletionProfile(models.Model):
                 email=student_data[c.REG_EMAIL],
                 is_active=True
             )
+            year_of_birth = None
+            if student_data[c.REG_BIRTHDATE]:
+                year_of_birth = parser.parse(student_data[c.REG_BIRTHDATE]).year
             UserProfile.objects.create(
                 user=user,
                 name=student_data[c.REG_FIRST_NAME] + ' ' + student_data[c.REG_LAST_NAME],
                 country=student_data[c.REG_COUNTRY],
-                year_of_birth=parser.parse(student_data[c.REG_BIRTHDATE]).year,
+                year_of_birth=year_of_birth,
                 meta=json.dumps({
                     'ReturnURL': registration_data[c.REG_RETURN_URL],
                     'StudentKey': registration_data[c.REG_STUDENT][c.REG_STUDENT_KEY]
