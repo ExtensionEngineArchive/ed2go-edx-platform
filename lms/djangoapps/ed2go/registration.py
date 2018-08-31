@@ -33,7 +33,10 @@ def update_registration(registration_data):
     profile = UserProfile.objects.get(user=user)
     profile.name = student_data[c.REG_FIRST_NAME] + ' ' + student_data[c.REG_LAST_NAME]
     profile.country = student_data[c.REG_COUNTRY]
-    profile.year_of_birth = parser.parse(student_data[c.REG_BIRTHDATE]).year
+    if student_data[c.REG_BIRTHDATE]:
+        profile.year_of_birth = parser.parse(student_data[c.REG_BIRTHDATE]).year
+    else:
+        profile.year_of_birth = None
 
     meta = profile.get_meta() if profile.meta else {}
     meta['ReturnURL'] = registration_data[c.REG_RETURN_URL]
