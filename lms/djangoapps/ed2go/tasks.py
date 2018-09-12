@@ -58,6 +58,7 @@ def send_completion_report():
             )
             if response_data[c.RESP_SUCCESS] == 'true':
                 LOG.info('Sent batch completion report update.')
+                qs.update(to_report=False)
                 return True
         LOG.error('Failed to send batch completion report update.')
         return False
