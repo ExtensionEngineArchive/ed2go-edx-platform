@@ -56,7 +56,7 @@ class CourseSession(models.Model):
 
     def _update_completion_profile(self):
         """Update the corresponding CompletionProfile to indicate that the session was updated."""
-        profile, _ = CompletionProfile.objects.get_or_create(user=self.user, course_key=self.course_key)
+        profile = CompletionProfile.objects.get(user=self.user, course_key=self.course_key)
         profile.to_report = True
         profile.save()
 
