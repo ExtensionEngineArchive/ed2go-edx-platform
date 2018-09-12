@@ -56,7 +56,7 @@ class CourseSession(models.Model):
 
     def _update_completion_profile(self):
         """Update the corresponding CompletionProfile to indicate that the session was updated."""
-        profile, _ = CompletionProfile.objects.get_or_create(user=self.user, course_key=self.course_key)
+        profile = CompletionProfile.objects.get(user=self.user, course_key=self.course_key)
         profile.to_report = True
         profile.save()
 
@@ -231,7 +231,7 @@ class CompletionProfile(models.Model):
             c.REP_PERCENT_PROGRESS: round(self.progress * 100, 2),
             c.REP_LAST_ACCESS_DT: self.user.last_login.strftime('%Y-%m-%dT%H:%M:%SZ'),
             c.REP_COURSE_PASSED: str(course_grade.passed).lower(),
-            c.REP_PERCENT_PROGRESS: course_grade.percent,
+            c.REP_PERCENT_OVERALL_SCORE: course_grade.percent,
             c.REP_COMPLETION_DT: persistent_grade.passed_timestamp if persistent_grade else '',
             c.REP_TIME_SPENT: format_timedelta(CourseSession.total_time(user=self.user, course_key=self.course_key)),
         }

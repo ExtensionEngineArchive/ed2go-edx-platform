@@ -68,6 +68,7 @@ REP_PERCENT_PROGRESS = 'PercentProgress'
 REP_LAST_ACCESS_DT = 'LastAccessDatetimeGMT'
 REP_COURSE_PASSED = 'CoursePassed'
 REP_COMPLETION_DT = 'CompletionDatetimeGMT'
+REP_PERCENT_OVERALL_SCORE = 'PercentOverallScore'
 REP_TIME_SPENT = 'TimeSpent'
 
 # Response names
