@@ -14,3 +14,11 @@
 @import 'ed2go/dashboard';
 @import 'ed2go/learning-path';
 @import 'ed2go/footer';
+
+.page-header {
+  border: none;
+
+  .has-breadcrumbs {
+    display: none;
+  }
+}
