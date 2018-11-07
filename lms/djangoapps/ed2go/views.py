@@ -16,10 +16,9 @@ from courseware.courses import get_course_by_id
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.features.course_experience.utils import get_course_outline_block_tree
 
-from ed2go import constants
+from ed2go import constants as c
 from ed2go.discussions import get_forum_statistics
 from ed2go.models import CompletionProfile
-from ed2go.registration import get_or_create_user_completion_profile
 from ed2go.utils import request_valid
 
 LOG = logging.getLogger(__name__)
@@ -68,7 +67,7 @@ class SSOView(View):
         At the end of this request there needs to be:
             * a user object corresponding with the registration data gathered
               from Ed2go registration service endpoint
-            * a new or updated CompletionProfile object
+            * a new CompletionProfile object if it didn't exist before
             * the user needs to be logged in
             * the user needs to be redirected to the course in corresponding
               CompletionProfile object.
@@ -76,19 +75,24 @@ class SSOView(View):
         Invalid requests will be redirect to the passed in ReturnURL parameter, if
         there is one, else a 400 error will be returned.
         """
-        valid, msg = request_valid(request.POST, constants.SSO_REQUEST)
+        valid, msg = request_valid(request.POST, c.SSO_REQUEST)
         if not valid:
-            return_url = request.POST.get(constants.RETURN_URL)
+            return_url = request.POST.get(c.RETURN_URL)
             if return_url:
                 LOG.info('Invalid SSO request. Redirecting to %s', return_url)
                 return HttpResponseRedirect(return_url)
             return HttpResponse(msg, status=400)
 
-        registration_key = request.POST[constants.REGISTRATION_KEY]
-        user, completion_profile = get_or_create_user_completion_profile(registration_key)
+        registration_key = request.POST[c.REGISTRATION_KEY]
+        try:
+            completion_profile = CompletionProfile.objects.get(registration_key=registration_key)
+        except CompletionProfile.DoesNotExist:
+            completion_profile = CompletionProfile.create_from_key(registration_key)
 
+        user = completion_profile.user
         user.backend = settings.AUTHENTICATION_BACKENDS[0]
         login(request, user)
+
         return HttpResponseRedirect(
             reverse('course_root', kwargs={'course_id': completion_profile.course_key})
         )

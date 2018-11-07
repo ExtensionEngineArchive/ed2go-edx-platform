@@ -3,7 +3,6 @@ import logging
 import re
 import urllib
 from collections import defaultdict
-from xml.etree import ElementTree
 from random import randint
 
 import requests
@@ -14,7 +13,9 @@ from django.utils.timezone import now
 
 from lms.djangoapps.grades.new.course_grade_factory import CourseGradeFactory
 
-from ed2go import constants
+from ed2go import constants as c
+from ed2go.exceptions import InvalidEd2goRequestError
+from ed2go.xml_handler import XMLHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def request_expired(request_data):
     Returns:
         bool: True if the expiration date has passed, False otherwise.
     """
-    expiration_datetime = request_data.get(constants.REQUEST_EXPIRATION_DATETIME)
+    expiration_datetime = request_data.get(c.REQUEST_EXPIRATION_DATETIME)
     expiration_datetime = parse(urllib.unquote(expiration_datetime))
     return now() > expiration_datetime
 
@@ -46,29 +47,29 @@ def checksum_valid(request_data, request_type):
         bool: True if the received checksum is correct, False otherwise.
 
     Raises:
-        Exception:
+        InvalidEd2goRequestError:
             - the checksum in the request cannot be empty
             - the request type needs to be either an SSO or an Action request
             - none of the parameters needed for checksum generation can be empty
     """
     api_key = settings.ED2GO_API_KEY
 
-    checksum = request_data.get(constants.CHECKSUM)
+    checksum = request_data.get(c.CHECKSUM)
     if checksum is None:
-        raise Exception('Checksum cannot be empty.')
+        raise InvalidEd2goRequestError('Checksum cannot be empty.')
 
-    if request_type == constants.SSO_REQUEST:
-        checksum_params = constants.SSO_CHECKSUM_PARAMS
-    elif request_type == constants.ACTION_REQUEST:
-        checksum_params = constants.ACTION_CHECKSUM_PARAMS
+    if request_type == c.SSO_REQUEST:
+        checksum_params = c.SSO_CHECKSUM_PARAMS
+    elif request_type == c.ACTION_REQUEST:
+        checksum_params = c.ACTION_CHECKSUM_PARAMS
     else:
-        raise Exception('Request type %s not supported.' % request_type)
+        raise InvalidEd2goRequestError('Request type %s not supported.' % request_type)
 
     value_list = [api_key]
     for param in checksum_params:
         param_value = request_data.get(param)
         if param_value is None:
-            raise Exception('Param %s cannot be empty.' % param)
+            raise InvalidEd2goRequestError('Param %s cannot be empty.' % param)
         value_list.append(urllib.unquote(param_value))
 
     checksum_string = ''.join(value_list)
@@ -88,10 +89,10 @@ def request_valid(request_data, request_type):
         bool: True if the received request_data is valid, False otherwise.
     """
     if request_expired(request_data):
-        LOG.info('Expired action request. Type: %s', request_type)
+        LOG.info('Expired action request. Type: %s -- Request data: %s', request_type, request_data)
         return (False, 'Request expired.')
     if not checksum_valid(request_data, request_type):
-        LOG.info('Invalid action request checksum. Type: %s', request_type)
+        LOG.info('Invalid action request checksum. Type: %s -- Request data: %s', request_type, request_data)
         return (False, 'Checksum invalid.')
     return (True, '')
 
@@ -132,141 +133,6 @@ def extract_course_id_from_url(url):
         return None
     result = result.group()
     return result.split('/')[-1]
-
-
-class XMLHandler(object):
-    """Ed2go specific XML handler."""
-    headers = {'Content-Type': 'text/xml', 'charset': 'utf-8'}
-    soap_wrapper = '<?xml version="1.0" encoding="utf-8"?>' \
-        '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' \
-        'xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">' \
-        '<soap12:Body>' \
-        '{inner}' \
-        '</soap12:Body>' \
-        '</soap12:Envelope>'
-
-    def xml_from_dict(self, data):
-        """
-        Construct an XML string that would go into the soap_wrapper inner content.
-
-        Args:
-            data (dict): Dictionary with the data that is suppose to be compiled into
-                XML. The keys of the dictionary are XML element tags, values are values.
-                NOTE: The dictionary has to start with ` 'key': {...} `, e.g.:
-                    'root': {
-                        'tag': 'value',
-                        'tag2': 'value2',
-                        ...
-                    }
-                because the root tag needs the `xmlns` attribute.
-
-        Returns:
-            XML formatted string from the input data.
-        """
-        xml = ''
-        for k, v in data.items():  # pylint: disable=invalid-name
-            elements = ''
-            for sk, sv in v.items():  # pylint: disable=invalid-name
-                elements += '<{key}>{value}</{key}>'.format(key=sk, value=sv)
-            xml += '<{key} xmlns="https://api.ed2go.com">{elements}</{key}>'.format(
-                key=k, elements=elements
-            )
-        return xml
-
-    def request_data_from_dict(self, data):
-        return self.soap_wrapper.format(inner=self.xml_from_dict(data))
-
-    def request_data_from_xml(self, data):
-        return self.soap_wrapper.format(inner=data)
-
-    def clean_tag(self, element):
-        """
-        Remove the schema prefix.
-        Example:
-          "{https://api.ed2go.com}NewRegistration" > "NewRegistration"
-        """
-        return re.sub(r'{[\w\:\/\.]*}', '', element)
-
-    def dict_from_xml(self, elements):
-        """
-        Construct a dictionary from the XML tree.
-
-        Args:
-            elements (list): List of XML elements that are compiled into a dictionary.
-
-        Returns:
-            A dictionary with key being the elements tags.
-        """
-        data = {}
-        for element in elements:
-            if element.getchildren():
-                data[self.clean_tag(element.tag)] = self.dict_from_xml(element.getchildren())
-            else:
-                data[self.clean_tag(element.tag)] = element.text
-        return data
-
-    def _extract_elements_from_xml(self, xml, path):
-        """
-        Extract XML elements based on the given path.
-
-        Args:
-            xml (str): The whole SOAP XML envelope in string format.
-            path (str): The XML path to the sequence with the requested elements.
-                Example:
-                    './soap:Body' \
-                    '/a:GetRegistrationResponse' \
-                    '/a:RegistrationsResponse' \
-                    '/a:Registrations' \
-                    '/a:Registration'
-
-        Returns:
-            List of sequences found in the passed in XML string.
-        """
-        tree = ElementTree.fromstring(xml)
-        namespace = {
-            'soap': 'http://www.w3.org/2003/05/soap-envelope',
-            'a': 'https://api.ed2go.com'
-        }
-        return tree.findall(path, namespace)
-
-    def registration_data_from_xml(self, xml):
-        """
-        Extract the registration XML elements from the XML tree.
-
-        Args:
-            xml (str): XML tree in string format (raw content from the GetRegistration endpoint.)
-
-        Returns:
-            A dictionary with all the registration information extracted from dict.
-        """
-        path = './soap:Body' \
-               '/a:GetRegistrationResponse' \
-               '/a:RegistrationsResponse' \
-               '/a:Registrations' \
-               '/a:Registration'
-        elements = self._extract_elements_from_xml(xml, path)
-        return self.dict_from_xml(elements[0])
-
-    def completion_update_response_data_from_xml(self, xml):
-        """
-        Extract the completion update response XML elements from the XML tree.
-
-        Args:
-            xml (str): XML tree in string format (raw content from the GetRegistration endpoint.)
-
-        Returns:
-            A dictionary with all the response information extracted from dict:
-                * Result:
-                    - Success
-                    - Code
-                    - Message
-        """
-        path = './soap:Body' \
-               '/a:UpdateCompletionReportResponse' \
-               '/a:Response' \
-               '/a:Result'
-        elements = self._extract_elements_from_xml(xml, path)
-        return self.dict_from_xml(elements[0])
 
 
 def get_registration_data(reg_key):
@@ -323,15 +189,21 @@ def get_registration_data(reg_key):
     api_key = settings.ED2GO_API_KEY
     xmlh = XMLHandler()
     data = {
-        'GetRegistration': {
-            'APIKey': api_key,
-            'RegistrationKey': reg_key
+        c.REQ_GET_REGISTRATION: {
+            c.REQ_API_KEY: api_key,
+            c.REG_REGISTRATION_KEY: reg_key
         }
     }
     request_data = xmlh.request_data_from_dict(data)
 
     response = requests.post(url, data=request_data, headers=xmlh.headers)
     if response.status_code != 200:
+        LOG.error(
+            'Error when trying to get registration data for %s. Status code: %d, message: %s',
+            reg_key,
+            response.status_code,
+            response.content
+        )
         return None
     return xmlh.registration_data_from_xml(response.content)
 
@@ -423,3 +295,18 @@ def get_graded_chapters(course, student):
         chapter['perc_of_total'] = round(perc_of_total)
 
     return graded_chapters
+
+
+def get_request_info(request):
+    """Extract useful info from the request for debugging purposes."""
+    return 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {origin}'.format(
+        endpoint=request.META['PATH_INFO'],
+        method=request.method,
+        data=str(request.data),
+        origin=request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else 'none'
+    )
+
+
+def escape_xml_string(string):
+    """Escape not allowed XML characters."""
+    return string.replace('<', '&lt;').replace('>', '&gt;')

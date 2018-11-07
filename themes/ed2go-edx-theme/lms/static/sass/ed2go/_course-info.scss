@@ -11,11 +11,25 @@
 }
 
 .course-info {
+  @include media($tablet-large) {
+    .container {
+      min-width: unset;
+    }
+
+    .course-sidebar {
+      width: 100%;
+    }
+  }
+
   .details {
     padding: 3%;
     width: 59%;
     border: 1px solid $ed-light-grey;
     border-radius: 10px;
+
+    @include media($tablet-large) {
+      width: 100%;
+    }
 
     p {
       font: normal 300 16px/22px Open Sans;
@@ -28,12 +42,34 @@
     margin-top: unset;
     margin-bottom: 70px;
 
+    @include media($tablet-large) {
+      padding: 100px 0px 100px 0px;
+    }
+
     .intro-inner-wrapper {
       border-radius: 10px;
-      box-shadow: None;
+      box-shadow: none;
+
+      @include media($tablet-large) {
+        min-width: unset;
+      }
 
       &>div.table {
         margin-bottom: unset;
+
+        @include media($tablet-large) {
+          display: block;
+
+          .intro {
+            display: block;
+            width: 100%;
+          }
+
+          .media {
+            display: block;
+            width: 100%;
+          }
+        }
       }
 
       .intro>.heading-group {

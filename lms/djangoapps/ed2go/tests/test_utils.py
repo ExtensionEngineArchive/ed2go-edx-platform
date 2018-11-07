@@ -1,42 +1,45 @@
 import hashlib
 from datetime import timedelta, datetime
-from xml.etree import ElementTree
 
 import ddt
 import mock
 import requests
 from django.conf import settings
 from django.test import TestCase
+from django.test.client import RequestFactory
 
-from ed2go import constants
+from ed2go import constants as c
+from ed2go.exceptions import InvalidEd2goRequestError
 from ed2go.tests.mixins import Ed2goTestMixin
 from ed2go.utils import (
-    XMLHandler,
+    checksum_valid,
     extract_course_id_from_url,
+    extract_problem_id,
     format_timedelta,
     generate_username,
     get_registration_data,
-    checksum_valid,
-    extract_problem_id,
+    get_request_info,
     request_expired,
-    request_valid
+    request_valid,
+    escape_xml_string
 )
+from ed2go.xml_handler import XMLHandler
 
 
 @ddt.ddt
 class UtilsTests(Ed2goTestMixin, TestCase):
     request_data_fixture = {
-        constants.SSO_REQUEST: {
-            constants.CHECKSUM: '',
-            constants.REGISTRATION_KEY: 'dummy-key',
-            constants.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
-            constants.RETURN_URL: 'www.example.com'
+        c.SSO_REQUEST: {
+            c.CHECKSUM: '',
+            c.REGISTRATION_KEY: 'dummy-key',
+            c.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
+            c.RETURN_URL: 'www.example.com'
         },
-        constants.ACTION_REQUEST: {
-            constants.CHECKSUM: '',
-            constants.ACTION: 'dummy-action',
-            constants.REGISTRATION_KEY: 'dummy-key',
-            constants.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
+        c.ACTION_REQUEST: {
+            c.CHECKSUM: '',
+            c.ACTION: 'dummy-action',
+            c.REGISTRATION_KEY: 'dummy-key',
+            c.REQUEST_EXPIRATION_DATETIME: str(datetime.now()),
         }
     }
 
@@ -44,7 +47,7 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Returns False if request not expired."""
         time = self.freeze_time()
         request_data = {
-            constants.REQUEST_EXPIRATION_DATETIME: str(time + timedelta(minutes=10))
+            c.REQUEST_EXPIRATION_DATETIME: str(time + timedelta(minutes=10))
         }
         self.assertFalse(request_expired(request_data))
 
@@ -52,14 +55,14 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Returns True if request expired."""
         time = self.freeze_time()
         request_data = {
-            constants.REQUEST_EXPIRATION_DATETIME: str(time - timedelta(minutes=10))
+            c.REQUEST_EXPIRATION_DATETIME: str(time - timedelta(minutes=10))
         }
         self.assertTrue(request_expired(request_data))
 
     @ddt.data(
-        (constants.SSO_REQUEST, constants.SSO_CHECKSUM_PARAMS, True),
-        (constants.ACTION_REQUEST, constants.ACTION_CHECKSUM_PARAMS, True),
-        (constants.ACTION_REQUEST, [], False),
+        (c.SSO_REQUEST, c.SSO_CHECKSUM_PARAMS, True),
+        (c.ACTION_REQUEST, c.ACTION_CHECKSUM_PARAMS, True),
+        (c.ACTION_REQUEST, [], False),
     )
     @ddt.unpack
     def test_checksum_check(self, request_type, checksum_params, expected_bool):
@@ -68,30 +71,31 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         checksum_value_list = [request_data[param] for param in checksum_params]
         checksum_value_list.insert(0, settings.ED2GO_API_KEY)
 
-        request_data[constants.CHECKSUM] = hashlib.sha1(''.join(checksum_value_list)).hexdigest()
+        request_data[c.CHECKSUM] = hashlib.sha1(''.join(checksum_value_list)).hexdigest()
 
         self.assertEqual(checksum_valid(request_data, request_type), expected_bool)
 
-    @ddt.data(
-        ({}, constants.SSO_REQUEST),
-        ({constants.CHECKSUM: 'dummy-checksum'}, 'invalid-type')
-    )
-    @ddt.unpack
-    def test_checksum__check_missing_exception(self, request_data, request_type):
-        """Exception is raised when:
-            * a request without checksum is sent
-            * an invalid request type is sent
-        """
-        with self.assertRaises(Exception):
-            checksum_valid(request_data, request_type)
+    def test_checksum_check_missing_exception(self):
+        """InvalidEd2goRequestError is raised when a request without checksum is sent."""
+        type = c.SSO_REQUEST
+        data = self.request_data_fixture[type]
+        data.pop(c.CHECKSUM)
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(data, type)
+
+    def test_checksum_invalid_request_type(self):
+        """InvalidEd2goRequestError is raised when an invalid request type is sent."""
+        data = self.request_data_fixture[c.SSO_REQUEST]
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(data, 'invalid-type')
 
     def test_checksum_check_empty_param_exception(self):
-        """Exception is raised when a param value is missing."""
-        request_data = self.request_data_fixture[constants.SSO_REQUEST].copy()
-        request_data[constants.REGISTRATION_KEY] = None
+        """InvalidEd2goRequestError is raised when a param value is missing."""
+        request_data = self.request_data_fixture[c.SSO_REQUEST].copy()
+        request_data[c.REGISTRATION_KEY] = None
 
-        with self.assertRaises(Exception):
-            checksum_valid(request_data, constants.SSO_REQUEST)
+        with self.assertRaises(InvalidEd2goRequestError):
+            checksum_valid(request_data, c.SSO_REQUEST)
 
     @ddt.data(
         (False, True, True),
@@ -103,7 +107,7 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         """Request is valid when requirements are fulfilled."""
         with mock.patch('ed2go.utils.request_expired', return_value=request_exp), \
                 mock.patch('ed2go.utils.checksum_valid', return_value=chksum_valid):
-            valid, _ = request_valid({}, constants.SSO_REQUEST)
+            valid, _ = request_valid({}, c.SSO_REQUEST)
             self.assertEqual(valid, expected)
 
     @ddt.data(
@@ -180,67 +184,32 @@ class UtilsTests(Ed2goTestMixin, TestCase):
         request_mock.return_value = self._mock_post_request(status_code=400)
         self.assertIsNone(get_registration_data('dummy-reg-key'))
 
+    def test_get_request_info(self):
+        """The info should include all the necessary values."""
+        path = '/test/path'
+        method = 'GET'
+        data = 'test: data'
+        referer = 'www.google.com'
 
-class XMLHandlerTests(TestCase):
-    def setUp(self):
-        self.xmlh = XMLHandler()
+        request = RequestFactory().get(path)
+        request.data = data
+        request.META['HTTP_REFERER'] = referer
 
-    def test_xml_from_dict(self):
-        """Correctly convert a dictionary to XML."""
-        data = {
-            'root': {
-                'key': 'value'
-            }
-        }
-        expected = '<root xmlns="https://api.ed2go.com"><key>value</key></root>'
-        self.assertEqual(self.xmlh.xml_from_dict(data), expected)
+        request_info = get_request_info(request)
+        expected = 'Request Info: ENDPOINT: {endpoint} -- METHOD: {method} -- DATA: {data} -- REFERER: {referer}'.format(  # pylint: disable=line-too-long
+            endpoint=path,
+            method=method,
+            data=str(data),
+            referer=referer
+        )
+        self.assertEqual(request_info, expected)
 
-    def test_clean_tag(self):
-        """Extracts the element tag."""
-        element = '{https://api.ed2go.com}TestElement'
-        expected = 'TestElement'
-        self.assertEqual(self.xmlh.clean_tag(element), expected)
-
-    def test_dict_from_xml(self):
-        """Correctly converts an XML element to a dict."""
-        xml_tree = ElementTree.fromstring('<root><key>value</key></root>')
-        expected = {'key': 'value'}
-        self.assertEqual(self.xmlh.dict_from_xml(xml_tree), expected)
-
-    def test_registration_response_data_from_xml(self):
-        """Correctly converts registration request response XML to a dictionary."""
-        expected = {'TestUser': 'tester'}
-        test_response_xml = '<?xml version="1.0" encoding="utf-8"?>' \
-            '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">' \
-            '<soap:Body>' \
-            '<GetRegistrationResponse xmlns="https://api.ed2go.com">' \
-            '<RegistrationsResponse>' \
-            '<Registrations>' \
-            '<Registration>' \
-            '<TestUser>' + expected['TestUser'] + '</TestUser>' \
-            '</Registration>' \
-            '</Registrations>' \
-            '</RegistrationsResponse>' \
-            '</GetRegistrationResponse>' \
-            '</soap:Body>' \
-            '</soap:Envelope>'
-
-        self.assertEqual(self.xmlh.registration_data_from_xml(test_response_xml), expected)
-
-    def test_completion_response_data_from_xml(self):
-        """Correctly converts completion report update request response XML to a dictionary."""
-        expected = {'Success': 'true'}
-        test_response_xml = '<?xml version="1.0" encoding="utf-8"?>' \
-            '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">' \
-            '<soap:Body>' \
-            '<UpdateCompletionReportResponse xmlns="https://api.ed2go.com">' \
-            '<Response>' \
-            '<Result>' \
-            '<Success>' + expected['Success'] + '</Success>' \
-            '</Result>' \
-            '</Response>' \
-            '</UpdateCompletionReportResponse>' \
-            '</soap:Body>' \
-            '</soap:Envelope>'
-
-        self.assertEqual(self.xmlh.completion_update_response_data_from_xml(test_response_xml), expected)
+    @ddt.data(
+        ('test <string>', 'test &lt;string&gt;'),
+        ('test string', 'test string')
+    )
+    @ddt.unpack
+    def test_escape_xml_string(self, string, expected):
+        """XML characters should be escaped."""
+        result = escape_xml_string(string)
+        self.assertEqual(result, expected)

@@ -13,6 +13,7 @@ from student.tests.factories import UserFactory
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory
 
+from ed2go import constants as c
 from ed2go.models import CompletionProfile, CourseSession, ChapterProgress
 
 
@@ -20,6 +21,24 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
     username = 'tester'
     password = 'password'
     email = 'tester@example.com'
+
+    def get_mocked_registration_data(self, reg_key='dummy-key', year_of_birth=1990):
+        return {
+            c.REGISTRATION_KEY: reg_key,
+            c.REG_REFERENCE_ID: 123,
+            c.REG_STUDENT: {
+                c.REG_FIRST_NAME: 'tester',
+                c.REG_LAST_NAME: 'last-name',
+                c.REG_EMAIL: self.email,
+                c.REG_COUNTRY: 'US',
+                c.REG_BIRTHDATE: '{}-01-01T08:00:00Z'.format(year_of_birth),
+                c.REG_STUDENT_KEY: '60accf5f-51f1-4a73-8b70-9654a00ce4ab'
+            },
+            c.REG_COURSE: {
+                c.REG_CODE: 'DEV123x+2018_T2'
+            },
+            c.REG_RETURN_URL: 'www.example.com'
+        }
 
     def create_user(self, username=None, password=None, email=None):
         username = username if username else self.username
@@ -37,7 +56,7 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
         return CourseKey.from_string(course_str)
 
     @factory.django.mute_signals(signals.post_save)
-    def create_completion_profile(self, user=None, course_key=None, reg_key=None):
+    def create_completion_profile(self, user=None, course_key=None, reg_key=None, ref_id=None):
         """Create a new CompletionProfile instance.
 
         Args:
@@ -45,18 +64,21 @@ class Ed2goTestMixin(SharedModuleStoreTestCase):
             course_key (str): course key that will be converted to CourseKey instance and added
                 to the CompletionProfile instance.
             reg_key (str): registration key added to the CompletionProfile instance.
+            ref_id (int): reference ID added to the CompletionProfile instance.
 
         Returns:
             CompletionProfile instance.
         """
-        user = user if user else self.create_user()
+        user = user or self.create_user()
         course_key = CourseKey.from_string(course_key) if course_key else self.create_course_key()
-        reg_key = reg_key if reg_key else str(uuid.uuid4())
+        reg_key = reg_key or str(uuid.uuid4())
+        ref_id = ref_id or 123
 
         return CompletionProfile.objects.create(
             user=user,
             course_key=course_key,
-            registration_key=reg_key
+            registration_key=reg_key,
+            reference_id=ref_id
         )
 
     @factory.django.mute_signals(signals.post_save)
